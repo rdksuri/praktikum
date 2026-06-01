@@ -681,7 +681,8 @@
           </div>
         </div>
         <button class="btn-submit" onclick="sendMail('ziele')">✉️ Per Mail senden</button>
-        <p class="submit-hint">Öffnet deine Mail-App mit den ausgefüllten Daten an praktikum.rettungsdienst@ksuri.ch</p>
+        <button class="btn-submit" onclick="downloadTxt('ziele')" style="background:#555;margin-left:.5rem;">⬇ Als Datei herunterladen</button>
+        <p class="submit-hint">«Per Mail senden» öffnet deine Mail-App · «Als Datei herunterladen» speichert die Angaben als Textdatei</p>
       </div>
 
       <!-- ── SCHWEIGEPFLICHT ── -->
@@ -726,7 +727,8 @@
           </div>
         </div>
         <button class="btn-submit" onclick="sendMail('schweige')">✉️ Per Mail senden</button>
-        <p class="submit-hint">Öffnet deine Mail-App mit den ausgefüllten Daten an praktikum.rettungsdienst@ksuri.ch</p>
+        <button class="btn-submit" onclick="downloadTxt('schweige')" style="background:#555;margin-left:.5rem;">⬇ Als Datei herunterladen</button>
+        <p class="submit-hint">«Per Mail senden» öffnet deine Mail-App · «Als Datei herunterladen» speichert die Angaben als Textdatei</p>
       </div>
 
       <!-- ── PRAKTIKUMSAUSWERTUNG ── -->
@@ -787,7 +789,8 @@
           </div>
         </div>
         <button class="btn-submit" onclick="sendMail('auswertung')">✉️ Per Mail senden</button>
-        <p class="submit-hint">Öffnet deine Mail-App mit den ausgefüllten Daten an praktikum.rettungsdienst@ksuri.ch</p>
+        <button class="btn-submit" onclick="downloadTxt('auswertung')" style="background:#555;margin-left:.5rem;">⬇ Als Datei herunterladen</button>
+        <p class="submit-hint">«Per Mail senden» öffnet deine Mail-App · «Als Datei herunterladen» speichert die Angaben als Textdatei</p>
       </div>
 
     </div>
@@ -857,6 +860,68 @@
       window.location.href = 'mailto:' + mail
         + '?subject=' + encodeURIComponent(subject)
         + '&body=' + encodeURIComponent(body);
+    }
+
+    function downloadTxt(form) {
+      let filename = '', body = '';
+
+      if (form === 'ziele') {
+        filename = 'Praktikumsziele_' + (val('z-name') || 'Praktikant') + '.txt';
+        body = 'PRAKTIKUMSZIELE – RETTUNGSDIENST KANTONSSPITAL URI\n'
+          + '='.repeat(50) + '\n\n'
+          + 'Name / Vorname:         ' + val('z-name') + ' ' + val('z-vorname') + '\n'
+          + 'Adresse:                ' + val('z-adresse') + '\n'
+          + 'E-Mail:                 ' + val('z-email') + '\n'
+          + 'Geburtsdatum:           ' + val('z-geburtsdatum') + '\n'
+          + 'Grundausbildung/Beruf:  ' + val('z-beruf') + '\n'
+          + 'Ausbildungsstand:       ' + val('z-ausbildungsstand') + '\n\n'
+          + 'PRAKTIKUMSZIELE:\n'
+          + '1. ' + val('z-ziel1') + '\n'
+          + '2. ' + val('z-ziel2') + '\n'
+          + '3. ' + val('z-ziel3') + '\n'
+          + (val('z-ziel4') ? '4. ' + val('z-ziel4') + '\n' : '')
+          + (val('z-ziel5') ? '5. ' + val('z-ziel5') + '\n' : '')
+          + '\nPersönliche Bemerkung:\n' + val('z-bemerkung') + '\n\n'
+          + 'Ort / Datum: ' + val('z-ort') + ', ' + val('z-datum') + '\n\n'
+          + 'Bitte per Mail senden an: praktikum.rettungsdienst@ksuri.ch';
+      }
+
+      if (form === 'schweige') {
+        filename = 'Schweigepflicht_' + (val('s-name') || 'Praktikant') + '.txt';
+        const best = document.getElementById('s-bestaetigung').checked;
+        body = 'SCHWEIGEPFLICHT – RETTUNGSDIENST KANTONSSPITAL URI\n'
+          + '='.repeat(50) + '\n\n'
+          + 'Name / Vorname:  ' + val('s-name') + ' ' + val('s-vorname') + '\n'
+          + 'Geburtsdatum:    ' + val('s-geburtsdatum') + '\n\n'
+          + 'Bestätigung:     ' + (best ? '✓ Schweigepflicht bestätigt' : '✗ Noch nicht bestätigt') + '\n\n'
+          + 'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum') + '\n\n'
+          + 'Bitte per Mail senden an: praktikum.rettungsdienst@ksuri.ch';
+      }
+
+      if (form === 'auswertung') {
+        filename = 'Praktikumsauswertung_' + (val('a-name') || 'Praktikant') + '.txt';
+        const erfuellt = document.querySelector('input[name="erfuellt"]:checked');
+        const interesse = document.querySelector('input[name="interesse"]:checked');
+        body = 'PRAKTIKUMSAUSWERTUNG – RETTUNGSDIENST KANTONSSPITAL URI\n'
+          + '='.repeat(50) + '\n\n'
+          + 'Name des Praktikanten:           ' + val('a-name') + '\n'
+          + 'Verantw. Rettungssanitäter:      ' + val('a-sanit') + '\n'
+          + 'Datum des Praktikums:            ' + val('a-datum') + '\n\n'
+          + 'Erwartungen / Ziele erfüllt:     ' + (erfuellt ? erfuellt.value : '–') + '\n'
+          + 'Schriftliche Ergänzung:\n' + val('a-ergaenzung') + '\n\n'
+          + 'Interesse Ausbildung RS HF:      ' + (interesse ? interesse.value : '–') + '\n\n'
+          + 'Rückmeldung / Verbesserungsvorschläge:\n' + val('a-feedback') + '\n\n'
+          + 'Ort / Datum: ' + val('a-ort') + ', ' + val('a-abschlussdatum') + '\n\n'
+          + 'Bitte per Mail senden an: praktikum.rettungsdienst@ksuri.ch';
+      }
+
+      const blob = new Blob([body], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
     }
   </script>
 
