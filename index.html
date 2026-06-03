@@ -488,10 +488,28 @@
       </iframe>
 
       <div style="margin-top:1.2rem;">
-        <p style="font-size:.85rem;color:var(--muted);margin-bottom:.6rem;">📍 Lageplan – Rettungsdienst & Parkplatz</p>
-        <img src="lageplan.png" alt="Lageplan Rettungsdienst und Parkplatz Kantonsspital Uri"
-          style="width:100%;border-radius:8px;display:block;box-shadow:var(--shadow);" />
+        <button onclick="toggleLageplan()" id="lageplan-btn"
+          style="display:flex;align-items:center;gap:.5rem;background:var(--red-soft);border:1.5px solid #f0c4c0;border-radius:8px;padding:.6rem 1rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.88rem;font-weight:600;color:var(--red-dark);width:100%;text-align:left;">
+          <span>▶</span> Lageplan anzeigen – Rettungsdienst &amp; Parkplatz
+        </button>
+        <div id="lageplan-box" style="display:none;margin-top:.6rem;">
+          <img src="lageplan.png" alt="Lageplan Rettungsdienst und Parkplatz Kantonsspital Uri"
+            style="width:100%;border-radius:8px;display:block;box-shadow:var(--shadow);" />
+        </div>
       </div>
+      <script>
+        function toggleLageplan() {
+          const box = document.getElementById('lageplan-box');
+          const btn = document.getElementById('lageplan-btn');
+          if (box.style.display === 'none') {
+            box.style.display = 'block';
+            btn.innerHTML = '<span>▼</span> Lageplan ausblenden';
+          } else {
+            box.style.display = 'none';
+            btn.innerHTML = '<span>▶</span> Lageplan anzeigen – Rettungsdienst &amp; Parkplatz';
+          }
+        }
+      </script>
 
       <div style="margin-top:1.2rem;" class="address-block">
         <div class="line">
@@ -607,7 +625,14 @@
       <h3>Formulare</h3>
     </div>
     <div class="card-body">
-      <p style="font-size:.88rem;color:var(--muted);margin-bottom:1.2rem;">Fülle die Formulare direkt hier aus – beim Abschicken öffnet sich automatisch deine Mail-App mit den eingetragenen Daten.</p>
+      <p style="font-size:.88rem;color:var(--muted);margin-bottom:1.2rem;">Fülle die Formulare direkt hier aus – beim Abschicken öffnet sich automatisch deine Mail-App mit den eingetragenen Daten. Alternativ kannst du die Formulare als Word-Dokument herunterladen.</p>
+
+      <!-- WORD DOWNLOADS -->
+      <div style="display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:1.5rem;">
+        <a href="dateien/Praktikumsziele.docx" download class="btn-download" style="font-size:.82rem;">⬇ Praktikumsziele.docx</a>
+        <a href="dateien/Schweigepflicht.docx" download class="btn-download" style="font-size:.82rem;background:#555;">⬇ Schweigepflicht.docx</a>
+        <a href="dateien/Praktikumsauswertung.docx" download class="btn-download" style="font-size:.82rem;background:#555;">⬇ Praktikumsauswertung.docx</a>
+      </div>
 
       <div class="form-tabs">
         <button class="tab-btn active" onclick="showTab('ziele')">🎯 Praktikumsziele</button>
