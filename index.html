@@ -751,6 +751,56 @@
             <input type="date" id="s-datum">
           </div>
         </div>
+
+        <div class="form-group" style="margin-top:.75rem;">
+          <label>Unterschrift</label>
+          <canvas id="sig-canvas" width="600" height="160"
+            style="border:1.5px solid var(--border);border-radius:8px;background:#fff;touch-action:none;width:100%;max-width:600px;display:block;cursor:crosshair;"></canvas>
+          <div style="display:flex;gap:.5rem;margin-top:.4rem;">
+            <button onclick="clearSig()" style="background:none;border:1.5px solid var(--border);border-radius:6px;padding:.3rem .8rem;font-size:.8rem;cursor:pointer;color:var(--muted);">✕ Löschen</button>
+            <span style="font-size:.78rem;color:var(--muted);align-self:center;">Mit Finger oder Maus unterschreiben</span>
+          </div>
+        </div>
+
+        <script>
+          (function() {
+            const canvas = document.getElementById('sig-canvas');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+
+            function getPos(e) {
+              const rect = canvas.getBoundingClientRect();
+              const scaleX = canvas.width / rect.width;
+              const scaleY = canvas.height / rect.height;
+              if (e.touches) {
+                return {
+                  x: (e.touches[0].clientX - rect.left) * scaleX,
+                  y: (e.touches[0].clientY - rect.top) * scaleY
+                };
+              }
+              return {
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY
+              };
+            }
+
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 2.5;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+            canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+            canvas.addEventListener('mouseup', () => drawing = false);
+            canvas.addEventListener('mouseleave', () => drawing = false);
+            canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+            canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+            canvas.addEventListener('touchend', () => drawing = false);
+
+            window.clearSig = function() { ctx.clearRect(0, 0, canvas.width, canvas.height); };
+            window.getSigDataUrl = function() { return canvas.toDataURL('image/png'); };
+          })();
+        </script>
         <button class="btn-submit" onclick="sendMail('schweige')">✉️ Per Mail senden</button>
         <button class="btn-submit" onclick="downloadTxt('schweige')" style="background:#555;margin-left:.5rem;">⬇ Als Datei herunterladen</button>
         <p class="submit-hint">«Per Mail senden» öffnet deine Mail-App · «Als Datei herunterladen» speichert die Angaben als Textdatei</p>
@@ -864,6 +914,7 @@
           + 'Name / Vorname: ' + val('s-name') + ' ' + val('s-vorname') + '\n'
           + 'Geburtsdatum: ' + val('s-geburtsdatum') + '\n\n'
           + 'Bestätigung Schweigepflicht: ' + (best ? '✓ Bestätigt' : '✗ Nicht bestätigt') + '\n\n'
+          + 'Unterschrift: [siehe angehängtes Bild – bitte Screenshot der Unterschrift mitsenden]\n\n'
           + 'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum');
       }
 
