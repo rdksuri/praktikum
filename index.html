@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Praktikum – Rettungsdienst Kantonsspital Uri</title>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --pink:      #e5007d;
+      --pink-dark: #c4006b;
+      --pink-soft: #fce8f3;
+      --teal:      #1a6b6b;
+      --teal-soft: #e6f0f0;
+      --ink:       #222222;
+      --muted:     #666666;
+      --border:    #d8d8d8;
+      --white:     #ffffff;
+      --bg:        #f5f5f5;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Source Sans 3', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+      font-size: 16px;
+    }
+
+    /* HEADER */
+    header {
+      background: var(--pink);
+      color: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,.15);
+    }
+    .header-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      height: 68px;
+      gap: 1.2rem;
+    }
+    .ksu-logo {
+      background: var(--white);
+      color: var(--pink);
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: .25rem .5rem;
+      letter-spacing: .02em;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+    .header-title .org {
+      font-size: .82rem;
+      font-weight: 400;
+      opacity: .85;
+    }
+    .header-title .dept {
+      font-size: 1rem;
+      font-weight: 700;
+    }
+    .header-sub {
+      font-size: .82rem;
+      font-weight: 300;
+      opacity: .8;
+      margin-left: auto;
+    }
+
+    /* HERO */
+    .hero {
+      background: var(--pink);
+      color: var(--white);
+      padding: 3.5rem 2rem 3rem;
+    }
+    .hero-inner { max-width: 1100px; margin: 0 auto; }
+    .hero-label {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      opacity: .75;
+      margin-bottom: .5rem;
+    }
+    .hero h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: .7rem;
+    }
+    .hero h2 strong { font-weight: 700; }
+    .hero p { font-size: 1rem; opacity: .85; max-width: 540px; font-weight: 300; }
+
+    /* MAIN */
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 5rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    /* SECTION */
+    .section {
+      background: var(--white);
+      border: 1px solid var(--border);
+    }
+    .section-header {
+      background: var(--white);
+      padding: 1rem 1.6rem;
+      border-bottom: 2px solid var(--pink);
+      display: flex;
+      align-items: center;
+    }
+    .section-header h3 {
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--pink);
+    }
+    .section-body { padding: 1.6rem; }
+
+    /* ADDRESS */
+    .address-grid { display: grid; gap: .55rem; }
+    .address-row { display: flex; gap: 1rem; font-size: .95rem; align-items: flex-start; }
+    .address-row .lbl {
+      color: var(--muted);
+      font-size: .78rem;
+      min-width: 110px;
+      padding-top: .18rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .link { color: var(--pink); text-decoration: none; font-weight: 600; }
+    .link:hover { text-decoration: underline; }
+
+    /* LAGEPLAN */
+    .lageplan-toggle {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      background: var(--pink-soft);
+      border: 1px solid #f0b8d8;
+      padding: .65rem 1rem;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--pink-dark);
+      width: 100%;
+      text-align: left;
+      margin-top: 1.2rem;
+    }
+    .lageplan-toggle:hover { background: #f8d0e8; }
+    #lageplan-box { display: none; margin-top: .5rem; }
+    #lageplan-box img { width: 100%; display: block; border: 1px solid var(--border); }
+
+    /* PARKING */
+    .parking-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .parking-item {
+      background: var(--pink-soft);
+      border-left: 3px solid var(--pink);
+      padding: 1rem 1.1rem;
+    }
+    .parking-item h4 {
+      font-size: .82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--pink-dark);
+      margin-bottom: .35rem;
+    }
+    .parking-item p { font-size: .9rem; color: var(--muted); }
+
+    /* STEPS */
+    .steps { display: flex; flex-direction: column; }
+    .step {
+      display: flex;
+      gap: 1.2rem;
+      align-items: flex-start;
+      padding: .9rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .step:last-child { border-bottom: none; }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: var(--pink);
+      color: #fff;
+      font-size: .8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: .1rem;
+      border-radius: 50%;
+    }
+    .step-text strong { font-size: .95rem; display: block; font-weight: 700; color: var(--ink); }
+    .step-text span { font-size: .88rem; color: var(--muted); }
+
+    /* PHONE */
+    .phone-list { display: flex; flex-direction: column; gap: .6rem; }
+    .phone-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .9rem 1.1rem;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--pink);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .phone-item .who { font-size: .9rem; font-weight: 700; }
+    .phone-item .note { font-size: .8rem; color: var(--muted); }
+    .phone-item a { color: var(--pink); text-decoration: none; font-weight: 700; font-size: 1rem; }
+    .phone-item a:hover { text-decoration: underline; }
+
+    /* FORMS */
+    .form-section-title {
+      font-size: .75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--pink-dark);
+      margin: 1.4rem 0 .6rem;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .75rem; }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-group { display: flex; flex-direction: column; gap: .3rem; }
+    .form-group label {
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--ink);
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+    .form-group input,
+    .form-group textarea {
+      border: 1px solid var(--border);
+      padding: .6rem .9rem;
+      font-family: inherit;
+      font-size: .95rem;
+      color: var(--ink);
+      background: #fafafa;
+      width: 100%;
+      border-radius: 0;
+      transition: border-color .15s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { outline: none; border-color: var(--pink); background: #fff; }
+    .form-group textarea { resize: vertical; min-height: 90px; }
+
+    .schweige-text {
+      background: var(--pink-soft);
+      border-left: 3px solid var(--pink);
+      padding: 1rem 1.2rem;
+      font-size: .88rem;
+      color: var(--ink);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+
+    .radio-group { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .3rem; }
+    .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .4rem .9rem;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: .88rem;
+      transition: all .15s;
+    }
+    .radio-group input[type=radio] { accent-color: var(--pink); }
+    .radio-group label:has(input:checked) {
+      border-color: var(--pink);
+      background: var(--pink-soft);
+      color: var(--pink-dark);
+      font-weight: 700;
+    }
+
+    /* SIG */
+    #sig-canvas {
+      border: 1px solid var(--border);
+      background: #fff;
+      touch-action: none;
+      width: 100%;
+      max-width: 600px;
+      display: block;
+      cursor: crosshair;
+    }
+    .sig-clear {
+      background: none;
+      border: 1px solid var(--border);
+      padding: .3rem .8rem;
+      font-size: .8rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--muted);
+      margin-top: .4rem;
+    }
+    .sig-clear:hover { border-color: var(--pink); color: var(--pink); }
+
+    /* DIVIDER */
+    .form-divider {
+      border: none;
+      border-top: 2px dashed var(--border);
+      margin: 2rem 0 1.5rem;
+    }
+
+    .btn-submit {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--pink);
+      color: #fff;
+      border: none;
+      padding: .75rem 2rem;
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1.5rem;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      transition: background .15s;
+    }
+    .btn-submit:hover { background: var(--pink-dark); }
+    .submit-hint { font-size: .78rem; color: var(--muted); margin-top: .5rem; }
+
+    /* NOTICE */
+    .notice {
+      background: var(--teal-soft);
+      border-left: 3px solid var(--teal);
+      padding: 1rem 1.2rem;
+      font-size: .9rem;
+      color: var(--ink);
+    }
+
+    /* FOOTER */
+    footer {
+      background: #222;
+      color: rgba(255,255,255,.65);
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: .82rem;
+    }
+    footer strong { color: #fff; }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .header-sub { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="ksu-logo">KSU</div>
+    <div class="header-title">
+      <span class="org">Kantonsspital Uri</span>
+      <span class="dept">Rettungsdienst</span>
+    </div>
+    <span class="header-sub">Informationen für Praktikantinnen und Praktikanten</span>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-label">Praktikum Rettungsdienst</div>
+    <h2><strong>Willkommen</strong> beim Rettungsdienst<br>Kantonsspital Uri</h2>
+    <p>Hier findest du alle wichtigen Informationen für deinen Start – Anfahrt, Parken, Ansprechpersonen und Formulare.</p>
+  </div>
+</div>
+
+<main>
+
+  <!-- ANFAHRT -->
+  <div class="section">
+    <div class="section-header"><h3>Anfahrt &amp; Standort</h3></div>
+    <div class="section-body">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2883.233014604539!2d8.63481367652301!3d46.88307387113265!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x478543823b483ff7%3A0xc27a2940e0741345!2sSpital%2C%20Spitalstrasse%2C%206460%20Altdorf!5e1!3m2!1sde!2sch!4v1779356377561!5m2!1sde!2sch"
+        width="100%" height="280" style="border:0;display:block;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+
+      <button class="lageplan-toggle" id="lageplan-btn" onclick="toggleLageplan()">
+        <span id="lageplan-arrow">&#9654;</span> Lageplan anzeigen – Rettungsdienst &amp; Parkplatz
+      </button>
+      <div id="lageplan-box">
+        <img src="lageplan.png" alt="Lageplan Rettungsdienst und Parkplatz Kantonsspital Uri" />
+      </div>
+
+      <div class="address-grid" style="margin-top:1.4rem;">
+        <div class="address-row">
+          <span class="lbl">Adresse</span>
+          <span>Kantonsspital Uri, Spitalstrasse 1, 6460 Altdorf</span>
+        </div>
+        <div class="address-row">
+          <span class="lbl">Rettungswache</span>
+          <span>Gebäude C / Altes Spitalgebäude</span>
+        </div>
+        <div class="address-row">
+          <span class="lbl">Google Maps</span>
+          <a href="https://www.google.com/maps/place/Spital,+Spitalstrasse,+6460+Altdorf/@46.8830739,8.6348137,662m" target="_blank" class="link">In Google Maps öffnen</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARKIEREN -->
+  <div class="section">
+    <div class="section-header"><h3>Parkieren</h3></div>
+    <div class="section-body">
+      <div class="parking-grid">
+        <div class="parking-item">
+          <h4>Spitalparkplatz</h4>
+          <p>Parkieren auf dem Spitalparkplatz neben dem Hauptgebäude.</p>
+        </div>
+        <div class="parking-item">
+          <h4>OeV / Velo</h4>
+          <p>Anreise mit öffentlichem Verkehr oder Velo wird empfohlen. Veloabstellplätze direkt vor der Rettungswache.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MELDEN -->
+  <div class="section">
+    <div class="section-header"><h3>Wo und wie meldest du dich?</h3></div>
+    <div class="section-body">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Ankunft</strong>
+            <span>Komm direkt zur Rettungswache in Gebäude C, gegenüber der Frauenarztpraxis.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Einlass</strong>
+            <span>Klopfen oder telefonisch melden (siehe Telefonnummern unten).</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Dokumente</strong>
+            <span>Unterschriebene Unterlagen mitbringen oder vorher per Mail zustellen: <a href="mailto:praktikum.rettungsdienst@ksuri.ch" class="link">praktikum.rettungsdienst@ksuri.ch</a></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TELEFON -->
+  <div class="section">
+    <div class="section-header"><h3>Wichtige Telefonnummern</h3></div>
+    <div class="section-body">
+      <div class="phone-list">
+        <div class="phone-item">
+          <div>
+            <div class="who">Rettungswache</div>
+            <div class="note">Bei Fragen oder wenn bei Ankunft niemand anzutreffen ist</div>
+          </div>
+          <a href="tel:+41418755501">041 875 55 01</a>
+        </div>
+        <div class="phone-item">
+          <div>
+            <div class="who">Empfang Kantonsspital Uri</div>
+            <div class="note">Falls Rettungswache nicht erreichbar</div>
+          </div>
+          <a href="tel:+41418755151">041 875 51 51</a>
+        </div>
+        <div class="phone-item">
+          <div>
+            <div class="who">Notruf</div>
+            <div class="note">Nur im Notfall</div>
+          </div>
+          <a href="tel:144"><strong>144</strong></a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULARE -->
+  <div class="section">
+    <div class="section-header"><h3>Formulare</h3></div>
+    <div class="section-body">
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:1.6rem;">Fülle alle drei Formulare aus und sende sie mit einem Klick gemeinsam per Mail an uns.</p>
+
+      <!-- PRAKTIKUMSZIELE -->
+      <div class="form-section-title" style="margin-top:0;">1 — Praktikumsziele</div>
+      <div class="form-row">
+        <div class="form-group"><label>Name</label><input type="text" id="z-name" placeholder="Nachname"></div>
+        <div class="form-group"><label>Vorname</label><input type="text" id="z-vorname" placeholder="Vorname"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Adresse, PLZ, Ort</label><input type="text" id="z-adresse" placeholder="Musterstrasse 1, 6460 Altdorf"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>E-Mail</label><input type="email" id="z-email" placeholder="name@beispiel.ch"></div>
+        <div class="form-group"><label>Geburtsdatum</label><input type="date" id="z-geburtsdatum"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Grundausbildung / Beruf</label><input type="text" id="z-beruf"></div>
+        <div class="form-group"><label>Ausbildungsstand</label><input type="text" id="z-ausbildungsstand"></div>
+      </div>
+      <div class="form-row full" style="margin-top:.5rem;">
+        <div class="form-group"><label>Ziele (mind. 3)</label>
+          <input type="text" id="z-ziel1" placeholder="Ziel 1" style="margin-bottom:.4rem;">
+          <input type="text" id="z-ziel2" placeholder="Ziel 2" style="margin-bottom:.4rem;">
+          <input type="text" id="z-ziel3" placeholder="Ziel 3" style="margin-bottom:.4rem;">
+          <input type="text" id="z-ziel4" placeholder="Ziel 4 (optional)" style="margin-bottom:.4rem;">
+          <input type="text" id="z-ziel5" placeholder="Ziel 5 (optional)">
+        </div>
+      </div>
+      <div class="form-row full" style="margin-top:.75rem;">
+        <div class="form-group"><label>Persönliche Bemerkung</label><textarea id="z-bemerkung" placeholder="Weitere Bemerkungen..."></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Ort</label><input type="text" id="z-ort" placeholder="Altdorf"></div>
+        <div class="form-group"><label>Datum</label><input type="date" id="z-datum"></div>
+      </div>
+
+      <hr class="form-divider">
+
+      <!-- SCHWEIGEPFLICHT -->
+      <div class="form-section-title" style="margin-top:0;">2 — Schweigepflicht</div>
+      <div class="schweige-text">
+        Durch das Praktikum im Rettungsdienst des Kantons Uri (KSU) erhalten Sie Informationen und Eindrücke, welche dem Amtsgeheimnis bzw. dem Berufsgeheimnis unterstehen. Über diese müssen Sie Stillschweigen bewahren, sei es gegenüber Privatpersonen, Rettungsdiensten oder anderen Organisationen. Der Verstoss gegen diese Schweigepflicht ist gemäss StGB Art. 320 bzw. 321 strafbar.
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;">
+          <input type="checkbox" id="s-bestaetigung" style="width:auto;margin-top:.2rem;accent-color:var(--pink);flex-shrink:0;">
+          <span style="font-size:.9rem;">Ich habe von dieser Strafnorm Kenntnis genommen und bestätige, auf die Pflicht zum Stillschweigen verständlich aufmerksam gemacht worden zu sein.</span>
+        </label>
+      </div>
+      <div style="margin-top:1rem;">
+        <div class="form-group" style="margin-bottom:.4rem;"><label>Unterschrift</label></div>
+        <canvas id="sig-canvas" width="600" height="150"></canvas>
+        <div style="display:flex;align-items:center;gap:.8rem;margin-top:.4rem;">
+          <button class="sig-clear" onclick="clearSig()">Löschen</button>
+          <span style="font-size:.78rem;color:var(--muted);">Mit Finger oder Maus unterschreiben</span>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:1rem;">
+        <div class="form-group"><label>Ort</label><input type="text" id="s-ort" placeholder="Altdorf"></div>
+        <div class="form-group"><label>Datum</label><input type="date" id="s-datum"></div>
+      </div>
+
+      <button class="btn-submit" onclick="sendZieleSchweige()">Praktikumsziele &amp; Schweigepflicht senden</button>
+      <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht gemeinsam an praktikum.rettungsdienst@ksuri.ch</p>
+
+      <hr class="form-divider">
+
+      <!-- PRAKTIKUMSAUSWERTUNG -->
+      <div class="form-section-title" style="margin-top:0;">3 — Praktikumsauswertung</div>
+      <div class="form-row">
+        <div class="form-group"><label>Name des Praktikanten</label><input type="text" id="a-name" placeholder="Vor- und Nachname"></div>
+        <div class="form-group"><label>Verantwortlicher Rettungssanitäter</label><input type="text" id="a-sanit"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Datum des Praktikums</label><input type="text" id="a-datum" placeholder="01.06.2026"></div>
+      </div>
+      <div class="form-group" style="margin-bottom:.75rem;">
+        <label>Wurden meine Erwartungen / Ziele erfüllt?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="erfuellt" value="Ja"> Ja</label>
+          <label><input type="radio" name="erfuellt" value="Mehrheitlich"> Mehrheitlich</label>
+          <label><input type="radio" name="erfuellt" value="Teilweise"> Teilweise</label>
+          <label><input type="radio" name="erfuellt" value="Ungenügend"> Ungenügend</label>
+          <label><input type="radio" name="erfuellt" value="Nein"> Nein</label>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Schriftliche Ergänzung</label><textarea id="a-ergaenzung" placeholder="Ergänzungen..."></textarea></div>
+      </div>
+      <div class="form-group" style="margin-bottom:.75rem;">
+        <label>Interesse an Ausbildung als Rettungssanitäter/in HF?</label>
+        <div class="radio-group">
+          <label><input type="radio" name="interesse" value="Ja"> Ja</label>
+          <label><input type="radio" name="interesse" value="Nein"> Nein</label>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-group"><label>Rückmeldung / Verbesserungsvorschläge</label><textarea id="a-feedback" placeholder="Dein Eindruck, Anliegen oder Verbesserungsvorschläge..."></textarea></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Ort</label><input type="text" id="a-ort" placeholder="Altdorf"></div>
+        <div class="form-group"><label>Datum</label><input type="date" id="a-abschlussdatum"></div>
+      </div>
+
+      <button class="btn-submit" onclick="sendAuswertung()">Praktikumsauswertung senden</button>
+      <p class="submit-hint">Sendet die Praktikumsauswertung gesondert an praktikum.rettungsdienst@ksuri.ch</p>
+
+    </div>
+  </div>
+
+  <div class="notice">
+    Bei Fragen vor dem Praktikum kannst du dich jederzeit per Telefon oder E-Mail bei uns melden. Wir freuen uns auf dich.
+  </div>
+
+</main>
+
+<footer>
+  <strong>Rettungsdienst Kantonsspital Uri</strong> &middot; Spitalstrasse 1, 6460 Altdorf<br>
+  <span style="font-size:.75rem;margin-top:.3rem;display:block;">Diese Seite richtet sich ausschliesslich an Praktikantinnen und Praktikanten des Rettungsdienstes.</span>
+</footer>
+
+<script>
+  function toggleLageplan() {
+    const box = document.getElementById('lageplan-box');
+    const arrow = document.getElementById('lageplan-arrow');
+    const btn = document.getElementById('lageplan-btn');
+    const open = box.style.display === 'block';
+    box.style.display = open ? 'none' : 'block';
+    arrow.innerHTML = open ? '&#9654;' : '&#9660;';
+    btn.childNodes[1].textContent = open
+      ? ' Lageplan anzeigen – Rettungsdienst & Parkplatz'
+      : ' Lageplan ausblenden';
+  }
+
+  function val(id) {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+
+  function sendZieleSchweige() {
+    const bestaetigt = document.getElementById('s-bestaetigung').checked;
+    const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
+    const body =
+      '════════════════════════════════════\n' +
+      '1. PRAKTIKUMSZIELE\n' +
+      '════════════════════════════════════\n\n' +
+      'Name / Vorname:        ' + val('z-name') + ' ' + val('z-vorname') + '\n' +
+      'Adresse:               ' + val('z-adresse') + '\n' +
+      'E-Mail:                ' + val('z-email') + '\n' +
+      'Geburtsdatum:          ' + val('z-geburtsdatum') + '\n' +
+      'Grundausbildung/Beruf: ' + val('z-beruf') + '\n' +
+      'Ausbildungsstand:      ' + val('z-ausbildungsstand') + '\n\n' +
+      'Ziele:\n' +
+      '1. ' + val('z-ziel1') + '\n' +
+      '2. ' + val('z-ziel2') + '\n' +
+      '3. ' + val('z-ziel3') + '\n' +
+      (val('z-ziel4') ? '4. ' + val('z-ziel4') + '\n' : '') +
+      (val('z-ziel5') ? '5. ' + val('z-ziel5') + '\n' : '') +
+      '\nPersönliche Bemerkung:\n' + val('z-bemerkung') + '\n' +
+      '\nOrt / Datum: ' + val('z-ort') + ', ' + val('z-datum') + '\n\n' +
+      '════════════════════════════════════\n' +
+      '2. SCHWEIGEPFLICHT\n' +
+      '════════════════════════════════════\n\n' +
+      'Bestätigung: ' + (bestaetigt ? 'Ja, bestätigt' : 'Noch nicht bestätigt') + '\n' +
+      'Unterschrift: [bitte Screenshot der Unterschrift als Anhang mitsenden]\n' +
+      'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum');
+
+    window.location.href = 'mailto:praktikum.rettungsdienst@ksuri.ch'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+  }
+
+  function sendAuswertung() {
+    const erfuellt = document.querySelector('input[name="erfuellt"]:checked');
+    const interesse = document.querySelector('input[name="interesse"]:checked');
+    const subject = 'Praktikumsauswertung – ' + val('a-name');
+    const body =
+      '════════════════════════════════════\n' +
+      'PRAKTIKUMSAUSWERTUNG\n' +
+      '════════════════════════════════════\n\n' +
+      'Name des Praktikanten:          ' + val('a-name') + '\n' +
+      'Verantw. Rettungssanitäter:     ' + val('a-sanit') + '\n' +
+      'Datum des Praktikums:           ' + val('a-datum') + '\n\n' +
+      'Erwartungen / Ziele erfüllt:    ' + (erfuellt ? erfuellt.value : '–') + '\n' +
+      'Schriftliche Ergänzung:\n' + val('a-ergaenzung') + '\n\n' +
+      'Interesse Ausbildung RS HF:     ' + (interesse ? interesse.value : '–') + '\n\n' +
+      'Rückmeldung:\n' + val('a-feedback') + '\n' +
+      '\nOrt / Datum: ' + val('a-ort') + ', ' + val('a-abschlussdatum');
+
+    window.location.href = 'mailto:praktikum.rettungsdienst@ksuri.ch'
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+  }
+
+  // Unterschrift Canvas
+  (function() {
+    const canvas = document.getElementById('sig-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    function getPos(e) {
+      const r = canvas.getBoundingClientRect();
+      const sx = canvas.width / r.width;
+      const sy = canvas.height / r.height;
+      if (e.touches) return { x: (e.touches[0].clientX - r.left) * sx, y: (e.touches[0].clientY - r.top) * sy };
+      return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
+    }
+
+    canvas.addEventListener('mousedown', e => { drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mouseup', () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+
+    window.clearSig = function() { ctx.clearRect(0, 0, canvas.width, canvas.height); };
+  })();
+</script>
+
+</body>
+</html>
