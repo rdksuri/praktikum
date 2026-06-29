@@ -736,6 +736,117 @@
       + '&body=' + encodeURIComponent(body);
   }
 
+  // Siren + Techno beat (Web Audio API, no external files)
+  (function () {
+    var ctx = null, playing = false;
+    var sirenOsc = null, sirenTimer = null, beatTimer = null;
+    var nextBeat = 0, beatStep = 0;
+    var BPM = 135, sp16 = 60 / BPM / 4;
+
+    function getCtx() {
+      if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function kick(t) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.setValueAtTime(160, t);
+      o.frequency.exponentialRampToValueAtTime(0.01, t + 0.42);
+      g.gain.setValueAtTime(0.85, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.42);
+      o.start(t); o.stop(t + 0.45);
+    }
+
+    function noiseHit(t, dur, vol, hpHz) {
+      var sz = Math.ceil(ctx.sampleRate * (dur + 0.01));
+      var buf = ctx.createBuffer(1, sz, ctx.sampleRate);
+      var d = buf.getChannelData(0);
+      for (var i = 0; i < sz; i++) d[i] = Math.random() * 2 - 1;
+      var src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
+      hp.type = 'highpass'; hp.frequency.value = hpHz;
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      src.buffer = buf;
+      src.connect(hp); hp.connect(g); g.connect(ctx.destination);
+      src.start(t); src.stop(t + dur + 0.01);
+    }
+
+    function bass(t, freq) {
+      var o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = freq;
+      lp.type = 'lowpass'; lp.frequency.value = 320;
+      g.gain.setValueAtTime(0.22, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + sp16 * 3.6);
+      o.connect(lp); lp.connect(g); g.connect(ctx.destination);
+      o.start(t); o.stop(t + sp16 * 4);
+    }
+
+    var bassNotes = [110, 0, 0, 0, 110, 0, 0, 0, 110, 0, 0, 0, 123, 0, 0, 0];
+
+    function scheduleBeat() {
+      if (!playing) return;
+      while (nextBeat < ctx.currentTime + 0.32) {
+        var s = beatStep % 16, t = nextBeat;
+        if (s % 4 === 0) kick(t);
+        if (s === 4 || s === 12) noiseHit(t, 0.13, 0.32, 1100);
+        if (s % 2 === 0) noiseHit(t, s % 8 === 6 ? 0.13 : 0.03, s % 8 === 6 ? 0.16 : 0.11, 9500);
+        if (bassNotes[s]) bass(t, bassNotes[s]);
+        beatStep++;
+        nextBeat += sp16;
+      }
+      beatTimer = setTimeout(scheduleBeat, 80);
+    }
+
+    function startSiren() {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sawtooth'; g.gain.value = 0.18;
+      o.connect(g); g.connect(ctx.destination);
+      sirenOsc = o; o.start();
+      function sweep() {
+        if (!playing) return;
+        var t = ctx.currentTime;
+        o.frequency.cancelScheduledValues(t);
+        o.frequency.setValueAtTime(960, t);
+        o.frequency.linearRampToValueAtTime(770, t + 0.48);
+        o.frequency.linearRampToValueAtTime(960, t + 0.96);
+        sirenTimer = setTimeout(sweep, 920);
+      }
+      sweep();
+    }
+
+    function start() {
+      getCtx(); playing = true;
+      nextBeat = ctx.currentTime + 0.06; beatStep = 0;
+      startSiren(); scheduleBeat();
+    }
+
+    function stop() {
+      playing = false;
+      clearTimeout(beatTimer); clearTimeout(sirenTimer);
+      if (sirenOsc) { try { sirenOsc.stop(); } catch (e) {} sirenOsc = null; }
+    }
+
+    var btn = document.createElement('button');
+    btn.id = 'siren-btn';
+    btn.textContent = '🔇';
+    btn.title = 'Sirene an';
+    btn.style.cssText = 'position:fixed;bottom:76px;right:14px;z-index:400;background:#e5007d;border:none;border-radius:50%;width:46px;height:46px;font-size:21px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.45);transition:transform .12s,background .15s;line-height:1;';
+    btn.addEventListener('mouseenter', function () { btn.style.transform = 'scale(1.12)'; });
+    btn.addEventListener('mouseleave', function () { btn.style.transform = 'scale(1)'; });
+    btn.addEventListener('click', function () {
+      if (playing) {
+        stop();
+        btn.textContent = '🔇'; btn.title = 'Sirene an'; btn.style.background = '#e5007d';
+      } else {
+        start();
+        btn.textContent = '🔊'; btn.title = 'Sirene aus'; btn.style.background = '#c4006b';
+      }
+    });
+    document.body.appendChild(btn);
+  })();
+
   // Unterschrift Canvas
   (function() {
     const canvas = document.getElementById('sig-canvas');
