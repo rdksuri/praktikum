@@ -501,7 +501,7 @@
           <div class="step-num">3</div>
           <div class="step-text">
             <strong>Formulare</strong>
-            <span>Fülle die Formulare unten auf dieser Seite aus und versende sie an <a href="mailto:praktikum.rettungsdienst@ksuri.ch" class="link">praktikum.rettungsdienst@ksuri.ch</a></span>
+            <span>Fülle die Formulare unten auf dieser Seite aus und versende sie an <a href="mailto:Praktikum.rettungsdienst@ksuri.ch" class="link">Praktikum.rettungsdienst@ksuri.ch</a></span>
           </div>
         </div>
       </div>
@@ -605,7 +605,7 @@
       </div>
 
       <button class="btn-submit" onclick="sendZieleSchweige()">Praktikumsziele &amp; Schweigepflicht senden</button>
-      <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht gemeinsam an praktikum.rettungsdienst@ksuri.ch</p>
+      <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht gemeinsam an Praktikum.rettungsdienst@ksuri.ch</p>
 
       <hr class="form-divider">
 
@@ -647,7 +647,7 @@
       </div>
 
       <button class="btn-submit" onclick="sendAuswertung()">Praktikumsauswertung senden</button>
-      <p class="submit-hint">Sendet die Praktikumsauswertung gesondert an praktikum.rettungsdienst@ksuri.ch</p>
+      <p class="submit-hint">Sendet die Praktikumsauswertung gesondert an Praktikum.rettungsdienst@ksuri.ch</p>
 
     </div>
   </div>
@@ -732,7 +732,7 @@
     const canvas = document.getElementById('sig-canvas');
     const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
     const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
-    const recipient = 'praktikum.rettungsdienst@ksuri.ch';
+    const recipient = 'Praktikum.rettungsdienst@ksuri.ch';
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     try {
@@ -842,7 +842,7 @@
       'Rückmeldung:\n' + val('a-feedback') + '\n' +
       '\nOrt / Datum: ' + val('a-ort') + ', ' + val('a-abschlussdatum');
 
-    window.location.href = 'mailto:praktikum.rettungsdienst@ksuri.ch'
+    window.location.href = 'mailto:Praktikum.rettungsdienst@ksuri.ch'
       + '?subject=' + encodeURIComponent(subject)
       + '&body=' + encodeURIComponent(body);
   }
