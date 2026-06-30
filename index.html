@@ -531,8 +531,8 @@
           <div>
             <div class="who">Notruf</div>
             <div class="note">Nur im Notfall</div>
+            <a href="tel:144" style="color:var(--pink);text-decoration:none;font-weight:700;font-size:1rem;display:inline-block;margin-top:.35rem;">144</a>
           </div>
-          <a href="tel:144"><strong>144</strong></a>
         </div>
       </div>
     </div>
@@ -681,34 +681,8 @@
     return el ? el.value.trim() : '';
   }
 
-  async function sendZieleSchweige() {
-    const bestaetigt = document.getElementById('s-bestaetigung').checked;
-    const canvas = document.getElementById('sig-canvas');
-    const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
-
-    // Generate signature PNG and handle delivery
-    let sigNote = '';
-    let clipOk = false;
-    try {
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-        clipOk = true;
-        sigNote = 'Unterschrift: [Bild in Zwischenablage – bitte im E-Mail mit Strg+V / Cmd+V einfügen]';
-      } else { throw 0; }
-    } catch(e) {
-      // Fallback: auto-download PNG
-      const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = fname;
-      a.click();
-      sigNote = 'Unterschrift: [automatisch als ' + fname + ' gespeichert – bitte als Anhang beifügen]';
-    }
-
-    showSigNotice(clipOk);
-
-    const body =
+  function buildEmailBody(bestaetigt, sigNote) {
+    return (
       '════════════════════════════════════\n' +
       '1. PRAKTIKUMSZIELE\n' +
       '════════════════════════════════════\n\n' +
@@ -731,31 +705,72 @@
       '════════════════════════════════════\n\n' +
       'Bestätigung: ' + (bestaetigt ? 'Ja, bestätigt' : 'Noch nicht bestätigt') + '\n' +
       sigNote + '\n' +
-      'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum');
+      'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum')
+    );
+  }
 
+  function openMailto(subject, body) {
     window.location.href = 'mailto:praktikum.rettungsdienst@ksuri.ch'
       + '?subject=' + encodeURIComponent(subject)
       + '&body=' + encodeURIComponent(body);
   }
 
-  function showSigNotice(clipOk) {
+  function showSigNotice(html) {
     const existing = document.getElementById('sig-notice');
     if (existing) existing.remove();
     const n = document.createElement('div');
     n.id = 'sig-notice';
     n.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a6b6b;color:#fff;padding:20px 28px;border-radius:4px;z-index:1000;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.5);max-width:92vw;font-family:inherit;font-size:15px;line-height:1.7;cursor:pointer;';
-    n.innerHTML = clipOk
-      ? '<strong style="font-size:17px">✅ Unterschrift in Zwischenablage kopiert</strong><br>'
-        + 'Im geöffneten E-Mail bitte <strong>Strg+V</strong> (Windows) oder <strong>Cmd+V</strong> (Mac) drücken,<br>'
-        + 'um die Unterschrift direkt einzufügen.<br>'
-        + '<small style="opacity:.75">Klicken zum Schliessen</small>'
-      : '<strong style="font-size:17px">📥 Unterschrift automatisch gespeichert</strong><br>'
-        + 'Datei <strong>unterschrift-[name].png</strong> wurde in deinen Download-Ordner gespeichert.<br>'
-        + 'Bitte diese Datei im geöffneten E-Mail als <strong>Anhang</strong> beifügen.<br>'
-        + '<small style="opacity:.75">Klicken zum Schliessen</small>';
+    n.innerHTML = html + '<br><small style="opacity:.75">Klicken zum Schliessen</small>';
     n.addEventListener('click', () => n.remove());
     setTimeout(() => { if (n.parentNode) n.remove(); }, 15000);
     document.body.appendChild(n);
+  }
+
+  async function sendZieleSchweige() {
+    const bestaetigt = document.getElementById('s-bestaetigung').checked;
+    const canvas = document.getElementById('sig-canvas');
+    const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
+    const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
+
+    try {
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      const file = new File([blob], fname, {type: 'image/png'});
+
+      // Mobile (iOS/Android): Web Share API – opens native share sheet with image as attachment
+      if (navigator.canShare && navigator.canShare({files: [file]})) {
+        await navigator.share({
+          files: [file],
+          title: subject,
+          text: buildEmailBody(bestaetigt, 'Unterschrift: [als Anhang beigefügt]')
+        });
+        return;
+      }
+
+      // Desktop: try clipboard copy
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        showSigNotice('<strong style="font-size:17px">✅ Unterschrift in Zwischenablage kopiert</strong><br>'
+          + 'Im geöffneten E-Mail bitte <strong>Strg+V</strong> (Windows) oder <strong>Cmd+V</strong> (Mac) drücken.');
+        openMailto(subject, buildEmailBody(bestaetigt,
+          'Unterschrift: [Bild in Zwischenablage – bitte mit Strg+V / Cmd+V einfügen]'));
+        return;
+      }
+
+      throw 0;
+    } catch(e) {
+      if (e && e.name === 'AbortError') return;
+      // Fallback: auto-download PNG
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = fname;
+      a.click();
+      showSigNotice('<strong style="font-size:17px">📥 Unterschrift gespeichert</strong><br>'
+        + 'Datei <strong>' + fname + '</strong> in deinem Download-Ordner –<br>'
+        + 'bitte als <strong>Anhang</strong> im geöffneten E-Mail beifügen.');
+      openMailto(subject, buildEmailBody(bestaetigt,
+        'Unterschrift: [als ' + fname + ' gespeichert – bitte als Anhang beifügen]'));
+    }
   }
 
   function sendAuswertung() {
