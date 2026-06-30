@@ -733,26 +733,21 @@
     const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
     const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
     const recipient = 'praktikum.rettungsdienst@ksuri.ch';
-
-    const ua = navigator.userAgent;
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     try {
       const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
       const file = new File([blob], fname, {type: 'image/png'});
 
-      // Mobile only (not macOS – there Web Share opens AirDrop instead of Mail)
+      // Mobile: show modal with address FIRST, share fires only on modal button click
+      // (direct click handler → valid user gesture for navigator.share)
       if (isMobile && navigator.canShare && navigator.canShare({files: [file]})) {
-        showMobileEmailBanner(recipient);
-        await navigator.share({
-          files: [file],
-          title: subject,
-          text: buildEmailBody(bestaetigt, 'Unterschrift: [als Anhang beigefügt]')
-        });
+        const shareBody = buildEmailBody(bestaetigt, 'Unterschrift: [als Anhang beigefügt]');
+        showMobileShareModal(recipient, file, subject, shareBody);
         return;
       }
 
-      // macOS + Windows/Linux: clipboard → Cmd+V / Strg+V, then open mailto with recipient
+      // macOS / Desktop: clipboard → Cmd+V / Strg+V, mailto with recipient
       if (navigator.clipboard && window.ClipboardItem) {
         await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
         showSigNotice('<strong style="font-size:17px">✅ Unterschrift in Zwischenablage kopiert</strong><br>'
@@ -765,7 +760,6 @@
       throw 0;
     } catch(e) {
       if (e && e.name === 'AbortError') return;
-      // Fallback: auto-download + mailto with recipient
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
       a.download = fname;
@@ -778,29 +772,57 @@
     }
   }
 
-  function showMobileEmailBanner(email) {
-    const existing = document.getElementById('mobile-email-banner');
-    if (existing) existing.remove();
-    const n = document.createElement('div');
-    n.id = 'mobile-email-banner';
-    n.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#e5007d;color:#fff;padding:16px 20px 14px;z-index:2000;text-align:center;font-family:inherit;font-size:14px;line-height:1.6;box-shadow:0 3px 14px rgba(0,0,0,.4);';
-    const btn = document.createElement('button');
-    btn.textContent = '📋 Adresse kopieren';
-    btn.style.cssText = 'margin-top:8px;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.8);color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;';
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      navigator.clipboard.writeText(email).then(() => { btn.textContent = '✅ Kopiert!'; });
+  // Modal appears before the share sheet so user can read/copy the recipient address.
+  // The share itself fires from the modal button click (= valid user gesture for navigator.share).
+  function showMobileShareModal(email, file, subject, bodyText) {
+    const overlay = document.createElement('div');
+    overlay.id = 'mobile-share-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;border-radius:10px;padding:28px 22px 22px;max-width:380px;width:100%;text-align:center;';
+
+    const addr = document.createElement('div');
+    addr.style.cssText = 'background:#fce8f3;border:2px solid #e5007d;border-radius:6px;padding:12px 14px;font-size:15px;font-weight:700;color:#222;word-break:break-all;margin-bottom:14px;';
+    addr.textContent = email;
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = '📋 Adresse kopieren';
+    copyBtn.style.cssText = 'width:100%;background:#e5007d;color:#fff;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;';
+    copyBtn.addEventListener('click', function() {
+      navigator.clipboard.writeText(email).then(() => {
+        copyBtn.textContent = '✅ Kopiert – jetzt Mail senden';
+        copyBtn.style.background = '#1a6b6b';
+      });
     });
-    n.innerHTML = '<strong style="font-size:15px">📧 Empfänger im Mail eintragen:</strong><br>'
-      + '<span style="font-size:15px;font-weight:700;letter-spacing:.01em">' + email + '</span><br>';
-    n.appendChild(btn);
-    const hint = document.createElement('div');
-    hint.style.cssText = 'font-size:11px;opacity:.8;margin-top:6px;';
-    hint.textContent = 'Mail im Share-Dialog wählen → Unterschrift ist als Anhang dabei';
-    n.appendChild(hint);
-    n.addEventListener('click', () => n.remove());
-    setTimeout(() => { if (n.parentNode) n.remove(); }, 40000);
-    document.body.appendChild(n);
+
+    const shareBtn = document.createElement('button');
+    shareBtn.textContent = '✉️ Unterschrift senden (Mail wählen)';
+    shareBtn.style.cssText = 'width:100%;background:#1a6b6b;color:#fff;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;';
+    shareBtn.addEventListener('click', function() {
+      overlay.remove();
+      // Direct click handler = valid user gesture for navigator.share
+      navigator.share({files: [file], title: subject, text: bodyText}).catch(function(e) {
+        if (e.name !== 'AbortError') {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(file);
+          a.download = file.name;
+          a.click();
+        }
+      });
+    });
+
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:12px;color:#888;margin:0;';
+    hint.textContent = 'Adresse kopieren → Mail wählen → Empfänger einfügen';
+
+    box.innerHTML = '<div style="font-size:13px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;">📧 Empfänger eingeben</div>';
+    box.appendChild(addr);
+    box.appendChild(copyBtn);
+    box.appendChild(shareBtn);
+    box.appendChild(hint);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
   }
 
   function sendAuswertung() {
