@@ -681,9 +681,33 @@
     return el ? el.value.trim() : '';
   }
 
-  function sendZieleSchweige() {
+  async function sendZieleSchweige() {
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
+    const canvas = document.getElementById('sig-canvas');
     const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
+
+    // Generate signature PNG and handle delivery
+    let sigNote = '';
+    let clipOk = false;
+    try {
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
+        clipOk = true;
+        sigNote = 'Unterschrift: [Bild in Zwischenablage – bitte im E-Mail mit Strg+V / Cmd+V einfügen]';
+      } else { throw 0; }
+    } catch(e) {
+      // Fallback: auto-download PNG
+      const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = fname;
+      a.click();
+      sigNote = 'Unterschrift: [automatisch als ' + fname + ' gespeichert – bitte als Anhang beifügen]';
+    }
+
+    showSigNotice(clipOk);
+
     const body =
       '════════════════════════════════════\n' +
       '1. PRAKTIKUMSZIELE\n' +
@@ -706,12 +730,32 @@
       '2. SCHWEIGEPFLICHT\n' +
       '════════════════════════════════════\n\n' +
       'Bestätigung: ' + (bestaetigt ? 'Ja, bestätigt' : 'Noch nicht bestätigt') + '\n' +
-      'Unterschrift: [bitte Screenshot der Unterschrift als Anhang mitsenden]\n' +
+      sigNote + '\n' +
       'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum');
 
     window.location.href = 'mailto:praktikum.rettungsdienst@ksuri.ch'
       + '?subject=' + encodeURIComponent(subject)
       + '&body=' + encodeURIComponent(body);
+  }
+
+  function showSigNotice(clipOk) {
+    const existing = document.getElementById('sig-notice');
+    if (existing) existing.remove();
+    const n = document.createElement('div');
+    n.id = 'sig-notice';
+    n.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a6b6b;color:#fff;padding:20px 28px;border-radius:4px;z-index:1000;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.5);max-width:92vw;font-family:inherit;font-size:15px;line-height:1.7;cursor:pointer;';
+    n.innerHTML = clipOk
+      ? '<strong style="font-size:17px">✅ Unterschrift in Zwischenablage kopiert</strong><br>'
+        + 'Im geöffneten E-Mail bitte <strong>Strg+V</strong> (Windows) oder <strong>Cmd+V</strong> (Mac) drücken,<br>'
+        + 'um die Unterschrift direkt einzufügen.<br>'
+        + '<small style="opacity:.75">Klicken zum Schliessen</small>'
+      : '<strong style="font-size:17px">📥 Unterschrift automatisch gespeichert</strong><br>'
+        + 'Datei <strong>unterschrift-[name].png</strong> wurde in deinen Download-Ordner gespeichert.<br>'
+        + 'Bitte diese Datei im geöffneten E-Mail als <strong>Anhang</strong> beifügen.<br>'
+        + '<small style="opacity:.75">Klicken zum Schliessen</small>';
+    n.addEventListener('click', () => n.remove());
+    setTimeout(() => { if (n.parentNode) n.remove(); }, 15000);
+    document.body.appendChild(n);
   }
 
   function sendAuswertung() {
