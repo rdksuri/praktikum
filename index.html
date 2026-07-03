@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Praktikum – Rettungsdienst Kantonsspital Uri</title>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
       --pink:      #e5007d;
@@ -604,8 +605,8 @@
         <div class="form-group"><label>Datum</label><input type="date" id="s-datum"></div>
       </div>
 
-      <button class="btn-submit" onclick="sendZieleSchweige()">Praktikumsziele &amp; Schweigepflicht senden</button>
-      <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht gemeinsam an Praktikum.rettungsdienst@ksuri.ch</p>
+      <button id="btn-ziele" class="btn-submit" data-label="Praktikumsziele &amp; Schweigepflicht senden" onclick="sendZieleSchweige()">Praktikumsziele &amp; Schweigepflicht senden</button>
+      <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht direkt per E-Mail an Praktikum.rettungsdienst@ksuri.ch</p>
 
       <hr class="form-divider">
 
@@ -646,8 +647,8 @@
         <div class="form-group"><label>Datum</label><input type="date" id="a-abschlussdatum"></div>
       </div>
 
-      <button class="btn-submit" onclick="sendAuswertung()">Praktikumsauswertung senden</button>
-      <p class="submit-hint">Sendet die Praktikumsauswertung gesondert an Praktikum.rettungsdienst@ksuri.ch</p>
+      <button id="btn-auswertung" class="btn-submit" data-label="Praktikumsauswertung senden" onclick="sendAuswertung()">Praktikumsauswertung senden</button>
+      <p class="submit-hint">Sendet die Praktikumsauswertung direkt per E-Mail an Praktikum.rettungsdienst@ksuri.ch</p>
 
     </div>
   </div>
@@ -657,6 +658,8 @@
   </div>
 
 </main>
+
+<div id="toast" style="display:none;position:fixed;top:84px;left:50%;transform:translateX(-50%);color:#fff;padding:16px 24px;border-radius:4px;z-index:1000;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.4);max-width:92vw;font-family:inherit;font-size:15px;line-height:1.6;"></div>
 
 <footer>
   <strong>Rettungsdienst Kantonsspital Uri</strong> &middot; Spitalstrasse 1, 6460 Altdorf<br>
@@ -676,175 +679,152 @@
       : ' Lageplan ausblenden';
   }
 
+  // ─── EmailJS Konfiguration ────────────────────────────────────────────────
+  // Einmalige Einrichtung (kostenlos, 200 Mails/Monat):
+  //   1. https://www.emailjs.com → Account erstellen
+  //   2. Email Services → Gmail hinzufügen → Service ID kopieren
+  //   3. Email Templates → Neues Template erstellen:
+  //        To:      {{to_email}}
+  //        Subject: {{subject}}
+  //        Body:    HTML aktivieren → Inhalt: {{{html_body}}}
+  //      → Template ID kopieren
+  //   4. Account → General → Public Key kopieren
+  const EJS_PUBLIC_KEY      = 'DEIN_PUBLIC_KEY';
+  const EJS_SERVICE_ID      = 'DEIN_SERVICE_ID';
+  const EJS_TEMPLATE_ID     = 'DEIN_TEMPLATE_ID';
+  const TO_EMAIL            = 'Praktikum.rettungsdienst@ksuri.ch';
+
+  emailjs.init({ publicKey: EJS_PUBLIC_KEY });
+
   function val(id) {
     const el = document.getElementById(id);
     return el ? el.value.trim() : '';
   }
 
-  function buildEmailBody(bestaetigt, sigNote) {
-    return (
-      '════════════════════════════════════\n' +
-      '1. PRAKTIKUMSZIELE\n' +
-      '════════════════════════════════════\n\n' +
-      'Name / Vorname:        ' + val('z-name') + ' ' + val('z-vorname') + '\n' +
-      'Adresse:               ' + val('z-adresse') + '\n' +
-      'E-Mail:                ' + val('z-email') + '\n' +
-      'Geburtsdatum:          ' + val('z-geburtsdatum') + '\n' +
-      'Grundausbildung/Beruf: ' + val('z-beruf') + '\n' +
-      'Ausbildungsstand:      ' + val('z-ausbildungsstand') + '\n\n' +
-      'Ziele:\n' +
-      '1. ' + val('z-ziel1') + '\n' +
-      '2. ' + val('z-ziel2') + '\n' +
-      '3. ' + val('z-ziel3') + '\n' +
-      (val('z-ziel4') ? '4. ' + val('z-ziel4') + '\n' : '') +
-      (val('z-ziel5') ? '5. ' + val('z-ziel5') + '\n' : '') +
-      '\nPersönliche Bemerkung:\n' + val('z-bemerkung') + '\n' +
-      '\nOrt / Datum: ' + val('z-ort') + ', ' + val('z-datum') + '\n\n' +
-      '════════════════════════════════════\n' +
-      '2. SCHWEIGEPFLICHT\n' +
-      '════════════════════════════════════\n\n' +
-      'Bestätigung: ' + (bestaetigt ? 'Ja, bestätigt' : 'Noch nicht bestätigt') + '\n' +
-      sigNote + '\n' +
-      'Ort / Datum: ' + val('s-ort') + ', ' + val('s-datum')
-    );
+  function setLoading(btn, loading) {
+    btn.disabled = loading;
+    btn.style.opacity = loading ? '0.6' : '1';
+    btn.textContent = loading ? 'Wird gesendet…' : btn.dataset.label;
   }
 
-  function openMailto(recipient, subject, body) {
-    window.location.href = 'mailto:' + recipient
-      + '?subject=' + encodeURIComponent(subject)
-      + '&body=' + encodeURIComponent(body);
+  function showToast(html, ok) {
+    const t = document.getElementById('toast');
+    t.innerHTML = html;
+    t.style.background = ok ? '#1a6b6b' : '#b5193a';
+    t.style.display = 'block';
+    t.onclick = () => t.style.display = 'none';
+    setTimeout(() => { t.style.display = 'none'; }, 10000);
   }
 
-  function showSigNotice(html) {
-    const existing = document.getElementById('sig-notice');
-    if (existing) existing.remove();
-    const n = document.createElement('div');
-    n.id = 'sig-notice';
-    n.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);background:#1a6b6b;color:#fff;padding:20px 28px;border-radius:4px;z-index:1000;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.5);max-width:92vw;font-family:inherit;font-size:15px;line-height:1.7;cursor:pointer;';
-    n.innerHTML = html + '<br><small style="opacity:.75">Klicken zum Schliessen</small>';
-    n.addEventListener('click', () => n.remove());
-    setTimeout(() => { if (n.parentNode) n.remove(); }, 15000);
-    document.body.appendChild(n);
+  function sigDataUrl() {
+    const src = document.getElementById('sig-canvas');
+    const tmp = document.createElement('canvas');
+    tmp.width = 500; tmp.height = 125;
+    tmp.getContext('2d').drawImage(src, 0, 0, 500, 125);
+    return tmp.toDataURL('image/png', 0.85);
+  }
+
+  function row(label, value) {
+    return '<tr><td style="padding:5px 12px 5px 0;color:#666;white-space:nowrap;vertical-align:top"><b>' + label + '</b></td><td style="padding:5px 0">' + (value || '–') + '</td></tr>';
   }
 
   async function sendZieleSchweige() {
+    const btn = document.getElementById('btn-ziele');
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
-    const canvas = document.getElementById('sig-canvas');
-    const subject = 'Praktikumsunterlagen – ' + val('z-name') + ' ' + val('z-vorname');
-    const fname = 'unterschrift-' + (val('z-name') || 'praktikant').replace(/\s+/g, '-') + '.png';
-    const recipient = 'Praktikum.rettungsdienst@ksuri.ch';
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const name = val('z-name') + ' ' + val('z-vorname');
+
+    setLoading(btn, true);
+
+    const ziele = [1,2,3,4,5]
+      .map(i => val('z-ziel' + i))
+      .filter(Boolean)
+      .map((z, i) => '<li style="margin-bottom:4px">' + z + '</li>')
+      .join('');
+
+    const sigImg = sigDataUrl();
+
+    const html = `
+<div style="font-family:Arial,sans-serif;max-width:640px;color:#222">
+  <div style="background:#e5007d;padding:18px 24px;margin-bottom:24px">
+    <h2 style="color:#fff;margin:0;font-size:18px">Praktikumsunterlagen – ${name}</h2>
+  </div>
+
+  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px">1. Praktikumsziele</h3>
+  <table style="border-collapse:collapse;font-size:14px;width:100%">
+    ${row('Name / Vorname', val('z-name') + ' ' + val('z-vorname'))}
+    ${row('Adresse', val('z-adresse'))}
+    ${row('E-Mail', val('z-email'))}
+    ${row('Geburtsdatum', val('z-geburtsdatum'))}
+    ${row('Grundausbildung / Beruf', val('z-beruf'))}
+    ${row('Ausbildungsstand', val('z-ausbildungsstand'))}
+  </table>
+  <p style="font-size:14px;margin-top:14px"><b>Ziele:</b></p>
+  <ol style="font-size:14px;margin:0 0 14px">${ziele}</ol>
+  <p style="font-size:14px"><b>Persönliche Bemerkung:</b><br>${val('z-bemerkung') || '–'}</p>
+  <p style="font-size:14px"><b>Ort / Datum:</b> ${val('z-ort')}, ${val('z-datum')}</p>
+
+  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px;margin-top:28px">2. Schweigepflicht</h3>
+  <p style="font-size:14px"><b>Bestätigung:</b> ${bestaetigt ? '✅ Ja, bestätigt' : '❌ Noch nicht bestätigt'}</p>
+  <p style="font-size:14px"><b>Unterschrift:</b></p>
+  <img src="${sigImg}" alt="Unterschrift" style="border:1px solid #ddd;max-width:400px;display:block;background:#fff">
+  <p style="font-size:14px;margin-top:12px"><b>Ort / Datum:</b> ${val('s-ort')}, ${val('s-datum')}</p>
+</div>`;
 
     try {
-      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-      const file = new File([blob], fname, {type: 'image/png'});
-
-      // Mobile: show modal with address FIRST, share fires only on modal button click
-      // (direct click handler → valid user gesture for navigator.share)
-      if (isMobile && navigator.canShare && navigator.canShare({files: [file]})) {
-        const shareBody = buildEmailBody(bestaetigt, 'Unterschrift: [als Anhang beigefügt]');
-        showMobileShareModal(recipient, file, subject, shareBody);
-        return;
-      }
-
-      // macOS / Desktop: clipboard → Cmd+V / Strg+V, mailto with recipient
-      if (navigator.clipboard && window.ClipboardItem) {
-        await navigator.clipboard.write([new ClipboardItem({'image/png': blob})]);
-        showSigNotice('<strong style="font-size:17px">✅ Unterschrift in Zwischenablage kopiert</strong><br>'
-          + 'Im geöffneten E-Mail bitte <strong>Cmd+V</strong> (Mac) oder <strong>Strg+V</strong> (Windows) drücken.');
-        openMailto(recipient, subject, buildEmailBody(bestaetigt,
-          'Unterschrift: [Bild in Zwischenablage – bitte mit Cmd+V / Strg+V einfügen]'));
-        return;
-      }
-
-      throw 0;
-    } catch(e) {
-      if (e && e.name === 'AbortError') return;
-      const a = document.createElement('a');
-      a.href = canvas.toDataURL('image/png');
-      a.download = fname;
-      a.click();
-      showSigNotice('<strong style="font-size:17px">📥 Unterschrift gespeichert</strong><br>'
-        + 'Datei <strong>' + fname + '</strong> in deinem Download-Ordner –<br>'
-        + 'bitte als <strong>Anhang</strong> im geöffneten E-Mail beifügen.');
-      openMailto(recipient, subject, buildEmailBody(bestaetigt,
-        'Unterschrift: [als ' + fname + ' gespeichert – bitte als Anhang beifügen]'));
+      await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+        to_email: TO_EMAIL,
+        subject: 'Praktikumsunterlagen – ' + name,
+        html_body: html,
+      });
+      showToast('<b>✅ Erfolgreich gesendet</b><br>Die Unterlagen wurden an ' + TO_EMAIL + ' verschickt.', true);
+    } catch (e) {
+      console.error(e);
+      showToast('<b>❌ Senden fehlgeschlagen</b><br>Bitte EmailJS einrichten (siehe Kommentar im Code) oder wende dich direkt an ' + TO_EMAIL + '.', false);
+    } finally {
+      setLoading(btn, false);
     }
   }
 
-  // Modal appears before the share sheet so user can read/copy the recipient address.
-  // The share itself fires from the modal button click (= valid user gesture for navigator.share).
-  function showMobileShareModal(email, file, subject, bodyText) {
-    const overlay = document.createElement('div');
-    overlay.id = 'mobile-share-modal';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
-
-    const box = document.createElement('div');
-    box.style.cssText = 'background:#fff;border-radius:10px;padding:28px 22px 22px;max-width:380px;width:100%;text-align:center;';
-
-    const addr = document.createElement('div');
-    addr.style.cssText = 'background:#fce8f3;border:2px solid #e5007d;border-radius:6px;padding:12px 14px;font-size:15px;font-weight:700;color:#222;word-break:break-all;margin-bottom:14px;';
-    addr.textContent = email;
-
-    const copyBtn = document.createElement('button');
-    copyBtn.textContent = '📋 Adresse kopieren';
-    copyBtn.style.cssText = 'width:100%;background:#e5007d;color:#fff;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px;';
-    copyBtn.addEventListener('click', function() {
-      navigator.clipboard.writeText(email).then(() => {
-        copyBtn.textContent = '✅ Kopiert – jetzt Mail senden';
-        copyBtn.style.background = '#1a6b6b';
-      });
-    });
-
-    const shareBtn = document.createElement('button');
-    shareBtn.textContent = '✉️ Unterschrift senden (Mail wählen)';
-    shareBtn.style.cssText = 'width:100%;background:#1a6b6b;color:#fff;border:none;border-radius:24px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:12px;';
-    shareBtn.addEventListener('click', function() {
-      overlay.remove();
-      // Direct click handler = valid user gesture for navigator.share
-      navigator.share({files: [file], title: subject, text: bodyText}).catch(function(e) {
-        if (e.name !== 'AbortError') {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(file);
-          a.download = file.name;
-          a.click();
-        }
-      });
-    });
-
-    const hint = document.createElement('p');
-    hint.style.cssText = 'font-size:12px;color:#888;margin:0;';
-    hint.textContent = 'Adresse kopieren → Mail wählen → Empfänger einfügen';
-
-    box.innerHTML = '<div style="font-size:13px;color:#666;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;">📧 Empfänger eingeben</div>';
-    box.appendChild(addr);
-    box.appendChild(copyBtn);
-    box.appendChild(shareBtn);
-    box.appendChild(hint);
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  }
-
-  function sendAuswertung() {
+  async function sendAuswertung() {
+    const btn = document.getElementById('btn-auswertung');
     const erfuellt = document.querySelector('input[name="erfuellt"]:checked');
     const interesse = document.querySelector('input[name="interesse"]:checked');
-    const subject = 'Praktikumsauswertung – ' + val('a-name');
-    const body =
-      '════════════════════════════════════\n' +
-      'PRAKTIKUMSAUSWERTUNG\n' +
-      '════════════════════════════════════\n\n' +
-      'Name des Praktikanten:          ' + val('a-name') + '\n' +
-      'Verantw. Rettungssanitäter:     ' + val('a-sanit') + '\n' +
-      'Datum des Praktikums:           ' + val('a-datum') + '\n\n' +
-      'Erwartungen / Ziele erfüllt:    ' + (erfuellt ? erfuellt.value : '–') + '\n' +
-      'Schriftliche Ergänzung:\n' + val('a-ergaenzung') + '\n\n' +
-      'Interesse Ausbildung RS HF:     ' + (interesse ? interesse.value : '–') + '\n\n' +
-      'Rückmeldung:\n' + val('a-feedback') + '\n' +
-      '\nOrt / Datum: ' + val('a-ort') + ', ' + val('a-abschlussdatum');
+    const name = val('a-name');
 
-    window.location.href = 'mailto:Praktikum.rettungsdienst@ksuri.ch'
-      + '?subject=' + encodeURIComponent(subject)
-      + '&body=' + encodeURIComponent(body);
+    setLoading(btn, true);
+
+    const html = `
+<div style="font-family:Arial,sans-serif;max-width:640px;color:#222">
+  <div style="background:#e5007d;padding:18px 24px;margin-bottom:24px">
+    <h2 style="color:#fff;margin:0;font-size:18px">Praktikumsauswertung – ${name}</h2>
+  </div>
+
+  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px">Praktikumsauswertung</h3>
+  <table style="border-collapse:collapse;font-size:14px;width:100%">
+    ${row('Name Praktikant', val('a-name'))}
+    ${row('Verantw. Rettungssanitäter', val('a-sanit'))}
+    ${row('Datum Praktikum', val('a-datum'))}
+    ${row('Erwartungen / Ziele erfüllt', erfuellt ? '<b>' + erfuellt.value + '</b>' : '–')}
+    ${row('Interesse Ausbildung RS HF', interesse ? '<b>' + interesse.value + '</b>' : '–')}
+  </table>
+  <p style="font-size:14px;margin-top:14px"><b>Schriftliche Ergänzung:</b><br>${val('a-ergaenzung') || '–'}</p>
+  <p style="font-size:14px"><b>Rückmeldung / Verbesserungsvorschläge:</b><br>${val('a-feedback') || '–'}</p>
+  <p style="font-size:14px"><b>Ort / Datum:</b> ${val('a-ort')}, ${val('a-abschlussdatum')}</p>
+</div>`;
+
+    try {
+      await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+        to_email: TO_EMAIL,
+        subject: 'Praktikumsauswertung – ' + name,
+        html_body: html,
+      });
+      showToast('<b>✅ Erfolgreich gesendet</b><br>Die Auswertung wurde an ' + TO_EMAIL + ' verschickt.', true);
+    } catch (e) {
+      console.error(e);
+      showToast('<b>❌ Senden fehlgeschlagen</b><br>Bitte EmailJS einrichten (siehe Kommentar im Code) oder wende dich direkt an ' + TO_EMAIL + '.', false);
+    } finally {
+      setLoading(btn, false);
+    }
   }
 
   // Unterschrift Canvas
