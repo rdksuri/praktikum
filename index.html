@@ -372,39 +372,6 @@
       .header-sub { display: none; }
     }
 
-    /* AMBULANCE */
-    #ambulance-lane {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 68px;
-      pointer-events: none;
-      z-index: 300;
-      overflow: hidden;
-    }
-    #ambulance {
-      position: absolute;
-      bottom: 2px;
-      animation: ambDrive 20s linear infinite;
-    }
-    @keyframes ambDrive {
-      0%   { left: -112px; transform: scaleX(1); }
-      47%  { left: calc(100% + 12px); transform: scaleX(1); }
-      50%  { left: calc(100% + 12px); transform: scaleX(-1); }
-      97%  { left: -112px; transform: scaleX(-1); }
-      100% { left: -112px; transform: scaleX(1); }
-    }
-    .amb-lb { animation: ambBlinkB 0.65s ease-in-out infinite; }
-    .amb-lr { animation: ambBlinkR 0.65s ease-in-out infinite; }
-    @keyframes ambBlinkB {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.08; }
-    }
-    @keyframes ambBlinkR {
-      0%, 100% { opacity: 0.08; }
-      50%       { opacity: 1; }
-    }
   </style>
 </head>
 <body>
@@ -864,46 +831,6 @@
 </script>
 
 
-<div id="ambulance-lane">
-  <div id="ambulance">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 66" width="104" height="57" aria-hidden="true">
-      <!-- Roof lightbar -->
-      <rect x="13" y="7" width="44" height="7" rx="2.5" fill="#c40056"/>
-      <!-- Blue beacon -->
-      <rect x="15" y="2" width="10" height="7" rx="2" fill="#33aaff" class="amb-lb"/>
-      <!-- Red beacon -->
-      <rect x="39" y="2" width="10" height="7" rx="2" fill="#ff2222" class="amb-lr"/>
-      <!-- Body -->
-      <rect x="3" y="14" width="78" height="37" rx="3" fill="white" stroke="#ccc" stroke-width="1.5"/>
-      <!-- Cab (front = right) -->
-      <path d="M81,22 L108,29 L110,51 L81,51 Z" fill="white" stroke="#ccc" stroke-width="1.5"/>
-      <!-- Cab window -->
-      <rect x="84" y="28" width="19" height="15" rx="2" fill="#a8dcf5" opacity="0.9"/>
-      <!-- Red cross vertical -->
-      <rect x="36" y="17" width="9" height="22" fill="#e5007d" rx="1.5"/>
-      <!-- Red cross horizontal -->
-      <rect x="25" y="22" width="31" height="12" fill="#e5007d" rx="1.5"/>
-      <!-- KSU label (rear section) -->
-      <text x="9" y="39" font-family="Arial,sans-serif" font-size="8" font-weight="bold" fill="#e5007d" letter-spacing="1">KSU</text>
-      <!-- Door separator -->
-      <line x1="70" y1="14" x2="70" y2="51" stroke="#d0d0d0" stroke-width="1"/>
-      <!-- Side stripe -->
-      <rect x="3" y="44" width="78" height="5" fill="#e5007d" opacity="0.22"/>
-      <!-- Chassis -->
-      <rect x="6" y="50" width="106" height="5" rx="1.5" fill="#c8c8c8"/>
-      <!-- Rear wheel -->
-      <circle cx="22" cy="59" r="9" fill="#1c1c1c"/>
-      <circle cx="22" cy="59" r="5.5" fill="#555"/>
-      <circle cx="22" cy="59" r="2.5" fill="#aaa"/>
-      <!-- Front wheel -->
-      <circle cx="90" cy="59" r="9" fill="#1c1c1c"/>
-      <circle cx="90" cy="59" r="5.5" fill="#555"/>
-      <circle cx="90" cy="59" r="2.5" fill="#aaa"/>
-      <!-- Headlight -->
-      <rect x="108" y="36" width="5" height="9" rx="1.5" fill="#fff59d" stroke="#ddd" stroke-width="0.5"/>
-    </svg>
-  </div>
-</div>
 
 </body>
 </html>
