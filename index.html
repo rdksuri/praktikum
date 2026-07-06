@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Praktikum – Rettungsdienst Kantonsspital Uri</title>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     :root {
       --pink:      #e5007d;
@@ -679,22 +678,8 @@
       : ' Lageplan ausblenden';
   }
 
-  // ─── EmailJS Konfiguration ────────────────────────────────────────────────
-  // Einmalige Einrichtung (kostenlos, 200 Mails/Monat):
-  //   1. https://www.emailjs.com → Account erstellen
-  //   2. Email Services → Gmail hinzufügen → Service ID kopieren
-  //   3. Email Templates → Neues Template erstellen:
-  //        To:      {{to_email}}
-  //        Subject: {{subject}}
-  //        Body:    HTML aktivieren → Inhalt: {{{html_body}}}
-  //      → Template ID kopieren
-  //   4. Account → General → Public Key kopieren
-  const EJS_PUBLIC_KEY      = 'DEIN_PUBLIC_KEY';
-  const EJS_SERVICE_ID      = 'DEIN_SERVICE_ID';
-  const EJS_TEMPLATE_ID     = 'DEIN_TEMPLATE_ID';
-  const TO_EMAIL            = 'Praktikum.rettungsdienst@ksuri.ch';
-
-  emailjs.init({ publicKey: EJS_PUBLIC_KEY });
+  const WEB3FORMS_KEY = 'f0cb41ac-b071-4da9-9415-fa6df0d59e79';
+  const TO_EMAIL      = 'Praktikum.rettungsdienst@ksuri.ch';
 
   function val(id) {
     const el = document.getElementById(id);
@@ -771,15 +756,25 @@
 </div>`;
 
     try {
-      await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
-        to_email: TO_EMAIL,
-        subject: 'Praktikumsunterlagen – ' + name,
-        html_body: html,
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: 'Praktikumsunterlagen – ' + name,
+          from_name: name,
+          message: html,
+        }),
       });
-      showToast('<b>✅ Erfolgreich gesendet</b><br>Die Unterlagen wurden an ' + TO_EMAIL + ' verschickt.', true);
+      const data = await res.json();
+      if (data.success) {
+        showToast('<b>✅ Erfolgreich gesendet</b><br>Die Unterlagen wurden an ' + TO_EMAIL + ' verschickt.', true);
+      } else {
+        throw new Error(data.message);
+      }
     } catch (e) {
       console.error(e);
-      showToast('<b>❌ Senden fehlgeschlagen</b><br>Bitte EmailJS einrichten (siehe Kommentar im Code) oder wende dich direkt an ' + TO_EMAIL + '.', false);
+      showToast('<b>❌ Senden fehlgeschlagen</b><br>' + (e.message || 'Unbekannter Fehler'), false);
     } finally {
       setLoading(btn, false);
     }
@@ -813,15 +808,25 @@
 </div>`;
 
     try {
-      await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
-        to_email: TO_EMAIL,
-        subject: 'Praktikumsauswertung – ' + name,
-        html_body: html,
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: 'Praktikumsauswertung – ' + name,
+          from_name: name,
+          message: html,
+        }),
       });
-      showToast('<b>✅ Erfolgreich gesendet</b><br>Die Auswertung wurde an ' + TO_EMAIL + ' verschickt.', true);
+      const data = await res.json();
+      if (data.success) {
+        showToast('<b>✅ Erfolgreich gesendet</b><br>Die Auswertung wurde an ' + TO_EMAIL + ' verschickt.', true);
+      } else {
+        throw new Error(data.message);
+      }
     } catch (e) {
       console.error(e);
-      showToast('<b>❌ Senden fehlgeschlagen</b><br>Bitte EmailJS einrichten (siehe Kommentar im Code) oder wende dich direkt an ' + TO_EMAIL + '.', false);
+      showToast('<b>❌ Senden fehlgeschlagen</b><br>' + (e.message || 'Unbekannter Fehler'), false);
     } finally {
       setLoading(btn, false);
     }
