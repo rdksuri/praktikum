@@ -683,6 +683,12 @@
   async function sendZieleSchweige() {
     const btn = document.getElementById('btn-ziele');
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
+
+    if (!bestaetigt) {
+      showToast('<b>⚠️ Schweigepflicht nicht bestätigt</b><br>Bitte setze den Haken bei der Schweigepflicht-Bestätigung.', false);
+      return;
+    }
+
     const name = val('z-name') + ' ' + val('z-vorname');
 
     setLoading(btn, true);
