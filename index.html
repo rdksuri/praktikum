@@ -734,16 +734,13 @@
 </div>`;
 
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          subject: 'Praktikumsunterlagen – ' + name,
-          from_name: name,
-          message: html,
-        }),
-      });
+      const fd = new FormData();
+      fd.append('access_key', WEB3FORMS_KEY);
+      fd.append('subject', 'Praktikumsunterlagen – ' + name);
+      fd.append('from_name', name);
+      fd.append('message', html);
+      fd.append('html', 'true');
+      const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         showToast('<b>✅ Erfolgreich gesendet</b><br>Die Unterlagen wurden an ' + TO_EMAIL + ' verschickt.', true);
@@ -788,13 +785,7 @@
     try {
       const res = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          subject: 'Praktikumsauswertung – ' + name,
-          from_name: name,
-          message: html,
-        }),
+        body: (() => { const fd = new FormData(); fd.append('access_key', WEB3FORMS_KEY); fd.append('subject', 'Praktikumsauswertung – ' + name); fd.append('from_name', name); fd.append('message', html); fd.append('html', 'true'); return fd; })(),
       });
       const data = await res.json();
       if (data.success) {
