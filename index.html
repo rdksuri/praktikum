@@ -554,7 +554,7 @@
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:flex-start;gap:.6rem;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400;">
-          <input type="checkbox" id="s-bestaetigung" style="width:auto;margin-top:.2rem;accent-color:var(--pink);flex-shrink:0;">
+          <input type="checkbox" id="s-bestaetigung" required style="width:auto;margin-top:.2rem;accent-color:var(--pink);flex-shrink:0;">
           <span style="font-size:.9rem;">Ich habe von dieser Strafnorm Kenntnis genommen und bestätige, auf die Pflicht zum Stillschweigen verständlich aufmerksam gemacht worden zu sein.</span>
         </label>
       </div>
@@ -571,6 +571,7 @@
         <div class="form-group"><label>Datum</label><input type="date" id="s-datum"></div>
       </div>
 
+      <p id="schweige-fehler" style="display:none;color:#b5193a;font-weight:700;font-size:.9rem;margin-top:.8rem;">⚠️ Bitte bestätige zuerst die Schweigepflicht.</p>
       <button id="btn-ziele" class="btn-submit" data-label="Praktikumsziele &amp; Schweigepflicht senden" onclick="sendZieleSchweige()">Praktikumsziele &amp; Schweigepflicht senden</button>
       <p class="submit-hint">Sendet Praktikumsziele und Schweigepflicht direkt per E-Mail an Praktikum.rettungsdienst@ksuri.ch</p>
 
@@ -685,9 +686,13 @@
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
 
     if (!bestaetigt) {
+      document.getElementById('schweige-fehler').style.display = 'block';
+      document.getElementById('s-bestaetigung').closest('label').style.outline = '2px solid #b5193a';
       showToast('<b>⚠️ Schweigepflicht nicht bestätigt</b><br>Bitte setze den Haken bei der Schweigepflicht-Bestätigung.', false);
       return;
     }
+    document.getElementById('schweige-fehler').style.display = 'none';
+    document.getElementById('s-bestaetigung').closest('label').style.outline = 'none';
 
     const name = val('z-name') + ' ' + val('z-vorname');
 
