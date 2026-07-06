@@ -677,10 +677,6 @@
     return tmp.toDataURL('image/png', 0.85);
   }
 
-  function row(label, value) {
-    return '<tr><td style="padding:5px 12px 5px 0;color:#666;white-space:nowrap;vertical-align:top"><b>' + label + '</b></td><td style="padding:5px 0">' + (value || '–') + '</td></tr>';
-  }
-
   async function sendZieleSchweige() {
     const btn = document.getElementById('btn-ziele');
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
@@ -701,45 +697,39 @@
     const ziele = [1,2,3,4,5]
       .map(i => val('z-ziel' + i))
       .filter(Boolean)
-      .map((z, i) => '<li style="margin-bottom:4px">' + z + '</li>')
-      .join('');
+      .map((z, i) => (i+1) + '. ' + z)
+      .join('\n');
 
-    const sigImg = sigDataUrl();
+    const msg =
+      '════════════════════════════\n' +
+      '1. PRAKTIKUMSZIELE\n' +
+      '════════════════════════════\n\n' +
+      'Name / Vorname:        ' + val('z-name') + ' ' + val('z-vorname') + '\n' +
+      'Adresse:               ' + val('z-adresse') + '\n' +
+      'E-Mail:                ' + val('z-email') + '\n' +
+      'Geburtsdatum:          ' + val('z-geburtsdatum') + '\n' +
+      'Beruf / Ausbildung:    ' + val('z-beruf') + '\n' +
+      'Ausbildungsstand:      ' + val('z-ausbildungsstand') + '\n\n' +
+      'Ziele:\n' + ziele + '\n\n' +
+      'Bemerkung:\n' + (val('z-bemerkung') || '–') + '\n' +
+      'Ort / Datum:           ' + val('z-ort') + ', ' + val('z-datum') + '\n\n' +
+      '════════════════════════════\n' +
+      '2. SCHWEIGEPFLICHT\n' +
+      '════════════════════════════\n\n' +
+      'Bestätigung:           ' + (bestaetigt ? 'Ja, bestätigt' : 'Nicht bestätigt') + '\n' +
+      'Unterschrift:          [siehe Anhang]\n' +
+      'Ort / Datum:           ' + val('s-ort') + ', ' + val('s-datum');
 
-    const html = `
-<div style="font-family:Arial,sans-serif;max-width:640px;color:#222">
-  <div style="background:#e5007d;padding:18px 24px;margin-bottom:24px">
-    <h2 style="color:#fff;margin:0;font-size:18px">Praktikumsunterlagen – ${name}</h2>
-  </div>
-
-  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px">1. Praktikumsziele</h3>
-  <table style="border-collapse:collapse;font-size:14px;width:100%">
-    ${row('Name / Vorname', val('z-name') + ' ' + val('z-vorname'))}
-    ${row('Adresse', val('z-adresse'))}
-    ${row('E-Mail', val('z-email'))}
-    ${row('Geburtsdatum', val('z-geburtsdatum'))}
-    ${row('Grundausbildung / Beruf', val('z-beruf'))}
-    ${row('Ausbildungsstand', val('z-ausbildungsstand'))}
-  </table>
-  <p style="font-size:14px;margin-top:14px"><b>Ziele:</b></p>
-  <ol style="font-size:14px;margin:0 0 14px">${ziele}</ol>
-  <p style="font-size:14px"><b>Persönliche Bemerkung:</b><br>${val('z-bemerkung') || '–'}</p>
-  <p style="font-size:14px"><b>Ort / Datum:</b> ${val('z-ort')}, ${val('z-datum')}</p>
-
-  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px;margin-top:28px">2. Schweigepflicht</h3>
-  <p style="font-size:14px"><b>Bestätigung:</b> ${bestaetigt ? '✅ Ja, bestätigt' : '❌ Noch nicht bestätigt'}</p>
-  <p style="font-size:14px"><b>Unterschrift:</b></p>
-  <img src="${sigImg}" alt="Unterschrift" style="border:1px solid #ddd;max-width:400px;display:block;background:#fff">
-  <p style="font-size:14px;margin-top:12px"><b>Ort / Datum:</b> ${val('s-ort')}, ${val('s-datum')}</p>
-</div>`;
+    const sigBlob = await new Promise(res => document.getElementById('sig-canvas').toBlob(res, 'image/png'));
+    const sigFile = new File([sigBlob], 'unterschrift-' + (val('z-name') || 'praktikant') + '.png', { type: 'image/png' });
 
     try {
       const fd = new FormData();
       fd.append('access_key', WEB3FORMS_KEY);
       fd.append('subject', 'Praktikumsunterlagen – ' + name);
       fd.append('from_name', name);
-      fd.append('message', html);
-      fd.append('html', 'true');
+      fd.append('message', msg);
+      fd.append('attachment', sigFile);
       const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
@@ -763,30 +753,26 @@
 
     setLoading(btn, true);
 
-    const html = `
-<div style="font-family:Arial,sans-serif;max-width:640px;color:#222">
-  <div style="background:#e5007d;padding:18px 24px;margin-bottom:24px">
-    <h2 style="color:#fff;margin:0;font-size:18px">Praktikumsauswertung – ${name}</h2>
-  </div>
-
-  <h3 style="color:#e5007d;border-bottom:2px solid #e5007d;padding-bottom:6px">Praktikumsauswertung</h3>
-  <table style="border-collapse:collapse;font-size:14px;width:100%">
-    ${row('Name Praktikant', val('a-name'))}
-    ${row('Verantw. Rettungssanitäter', val('a-sanit'))}
-    ${row('Datum Praktikum', val('a-datum'))}
-    ${row('Erwartungen / Ziele erfüllt', erfuellt ? '<b>' + erfuellt.value + '</b>' : '–')}
-    ${row('Interesse Ausbildung RS HF', interesse ? '<b>' + interesse.value + '</b>' : '–')}
-  </table>
-  <p style="font-size:14px;margin-top:14px"><b>Schriftliche Ergänzung:</b><br>${val('a-ergaenzung') || '–'}</p>
-  <p style="font-size:14px"><b>Rückmeldung / Verbesserungsvorschläge:</b><br>${val('a-feedback') || '–'}</p>
-  <p style="font-size:14px"><b>Ort / Datum:</b> ${val('a-ort')}, ${val('a-abschlussdatum')}</p>
-</div>`;
+    const msg =
+      '════════════════════════════\n' +
+      'PRAKTIKUMSAUSWERTUNG\n' +
+      '════════════════════════════\n\n' +
+      'Name Praktikant:            ' + val('a-name') + '\n' +
+      'Verantw. Rettungssanitäter: ' + val('a-sanit') + '\n' +
+      'Datum Praktikum:            ' + val('a-datum') + '\n' +
+      'Erwartungen / Ziele erfüllt:' + (erfuellt ? erfuellt.value : '–') + '\n' +
+      'Interesse Ausbildung RS HF: ' + (interesse ? interesse.value : '–') + '\n\n' +
+      'Schriftliche Ergänzung:\n' + (val('a-ergaenzung') || '–') + '\n\n' +
+      'Rückmeldung:\n' + (val('a-feedback') || '–') + '\n\n' +
+      'Ort / Datum:                ' + val('a-ort') + ', ' + val('a-abschlussdatum');
 
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        body: (() => { const fd = new FormData(); fd.append('access_key', WEB3FORMS_KEY); fd.append('subject', 'Praktikumsauswertung – ' + name); fd.append('from_name', name); fd.append('message', html); fd.append('html', 'true'); return fd; })(),
-      });
+      const fd = new FormData();
+      fd.append('access_key', WEB3FORMS_KEY);
+      fd.append('subject', 'Praktikumsauswertung – ' + name);
+      fd.append('from_name', name);
+      fd.append('message', msg);
+      const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success) {
         showToast('<b>✅ Erfolgreich gesendet</b><br>Die Auswertung wurde an ' + TO_EMAIL + ' verschickt.', true);
