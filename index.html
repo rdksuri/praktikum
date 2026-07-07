@@ -663,6 +663,36 @@
     setTimeout(() => { t.style.display = 'none'; }, 10000);
   }
 
+  function showSigModal(title, text, mailtoUrl) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px;font-family:inherit;';
+
+    const box = document.createElement('div');
+    box.style.cssText = 'background:#fff;padding:32px 28px 24px;max-width:420px;width:100%;border-top:5px solid #e5007d;';
+
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:20px;font-weight:700;color:#e5007d;margin-bottom:14px;';
+    h.textContent = title;
+
+    const p = document.createElement('div');
+    p.style.cssText = 'font-size:15px;line-height:1.7;color:#222;margin-bottom:24px;';
+    p.innerHTML = text;
+
+    const btn = document.createElement('button');
+    btn.textContent = '✉️ E-Mail öffnen';
+    btn.style.cssText = 'background:#e5007d;color:#fff;border:none;padding:12px 28px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;letter-spacing:.04em;';
+    btn.addEventListener('click', () => {
+      overlay.remove();
+      window.location.href = mailtoUrl;
+    });
+
+    box.appendChild(h);
+    box.appendChild(p);
+    box.appendChild(btn);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
   async function copySigToClipboard() {
     const canvas = document.getElementById('sig-canvas');
     try {
@@ -726,11 +756,24 @@
       'Ort / Datum:           ' + val('s-ort') + ', ' + val('s-datum');
 
     const method = await copySigToClipboard();
-    setTimeout(() => openMailto('Praktikumsunterlagen – ' + name, body), 300);
+    const mailtoUrl = 'mailto:' + TO_EMAIL
+      + '?subject=' + encodeURIComponent('Praktikumsunterlagen – ' + name)
+      + '&body=' + encodeURIComponent(body);
+
     if (method === 'clipboard') {
-      showToast('✅ Unterschrift in Zwischenablage kopiert!<br>E-Mail öffnet sich – drücke <b>Strg+V</b> um die Unterschrift einzufügen.', true);
+      showSigModal(
+        '✅ Unterschrift kopiert!',
+        'Die Unterschrift liegt in der <b>Zwischenablage</b>.<br><br>' +
+        'Klicke auf «E-Mail öffnen», dann drücke im E-Mail-Programm <b>Strg+V</b> (Windows) oder <b>Cmd+V</b> (Mac) um die Unterschrift einzufügen.',
+        mailtoUrl
+      );
     } else {
-      showToast('📎 Unterschrift gespeichert – bitte als Anhang zur E-Mail hinzufügen.', true);
+      showSigModal(
+        '📎 Unterschrift gespeichert',
+        'Die Unterschrift wurde als <b>unterschrift.png</b> in deinem Download-Ordner gespeichert.<br><br>' +
+        'Klicke auf «E-Mail öffnen» und füge die Datei dann als <b>Anhang</b> ein.',
+        mailtoUrl
+      );
     }
   }
 
