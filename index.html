@@ -663,12 +663,20 @@
     setTimeout(() => { t.style.display = 'none'; }, 10000);
   }
 
-  function downloadSig(name) {
+  async function copySigToClipboard() {
     const canvas = document.getElementById('sig-canvas');
-    const a = document.createElement('a');
-    a.href = canvas.toDataURL('image/png');
-    a.download = 'unterschrift-' + (name || 'praktikant').replace(/\s+/g, '-') + '.png';
-    a.click();
+    try {
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      return 'clipboard';
+    } catch (e) {
+      // Fallback: download
+      const a = document.createElement('a');
+      a.href = canvas.toDataURL('image/png');
+      a.download = 'unterschrift.png';
+      a.click();
+      return 'download';
+    }
   }
 
   function openMailto(subject, body) {
@@ -677,7 +685,7 @@
       + '&body=' + encodeURIComponent(body);
   }
 
-  function sendZieleSchweige() {
+  async function sendZieleSchweige() {
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
 
     if (!bestaetigt) {
@@ -717,9 +725,13 @@
       'Unterschrift:          [PNG-Anhang bitte hinzufügen]\n' +
       'Ort / Datum:           ' + val('s-ort') + ', ' + val('s-datum');
 
-    downloadSig(name);
+    const method = await copySigToClipboard();
     setTimeout(() => openMailto('Praktikumsunterlagen – ' + name, body), 300);
-    showToast('📎 Unterschrift gespeichert – bitte als Anhang zur E-Mail hinzufügen.', true);
+    if (method === 'clipboard') {
+      showToast('✅ Unterschrift in Zwischenablage kopiert!<br>E-Mail öffnet sich – drücke <b>Strg+V</b> um die Unterschrift einzufügen.', true);
+    } else {
+      showToast('📎 Unterschrift gespeichert – bitte als Anhang zur E-Mail hinzufügen.', true);
+    }
   }
 
   function sendAuswertung() {
