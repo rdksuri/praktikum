@@ -760,18 +760,26 @@
       + '?subject=' + encodeURIComponent('Praktikumsunterlagen – ' + name)
       + '&body=' + encodeURIComponent(body);
 
+    const phoneHint =
+      '<div style="margin-top:16px;padding:10px 14px;background:#f5f5f5;border-left:3px solid #e5007d;font-size:13px;color:#555;">' +
+      '<b>📱 Am Telefon:</b> Im geöffneten E-Mail-Programm auf das <b>Büroklammer-Symbol</b> tippen → ' +
+      '<b>Fotos / Dateien</b> wählen → die gespeicherte Unterschrift auswählen und anhängen.' +
+      '</div>';
+
     if (method === 'clipboard') {
       showSigModal(
         '✅ Unterschrift kopiert!',
         'Die Unterschrift liegt in der <b>Zwischenablage</b>.<br><br>' +
-        'Klicke auf «E-Mail öffnen», dann drücke im E-Mail-Programm <b>Strg+V</b> (Windows) oder <b>Cmd+V</b> (Mac) um die Unterschrift einzufügen.',
+        '💻 <b>Computer:</b> Klicke auf «E-Mail öffnen», dann drücke <b>Strg+V</b> (Windows) oder <b>Cmd+V</b> (Mac) um die Unterschrift einzufügen.' +
+        phoneHint,
         mailtoUrl
       );
     } else {
       showSigModal(
         '📎 Unterschrift gespeichert',
-        'Die Unterschrift wurde als <b>unterschrift.png</b> in deinem Download-Ordner gespeichert.<br><br>' +
-        'Klicke auf «E-Mail öffnen» und füge die Datei dann als <b>Anhang</b> ein.',
+        'Die Unterschrift wurde als <b>unterschrift.png</b> gespeichert.<br><br>' +
+        '💻 <b>Computer:</b> Klicke auf «E-Mail öffnen» und füge die Datei als <b>Anhang</b> ein.' +
+        phoneHint,
         mailtoUrl
       );
     }
