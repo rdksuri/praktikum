@@ -654,12 +654,6 @@
     return el ? el.value.trim() : '';
   }
 
-  function setLoading(btn, loading) {
-    btn.disabled = loading;
-    btn.style.opacity = loading ? '0.6' : '1';
-    btn.textContent = loading ? 'Wird gesendet…' : btn.dataset.label;
-  }
-
   function showToast(html, ok) {
     const t = document.getElementById('toast');
     t.innerHTML = html;
@@ -669,16 +663,21 @@
     setTimeout(() => { t.style.display = 'none'; }, 10000);
   }
 
-  function sigDataUrl() {
-    const src = document.getElementById('sig-canvas');
-    const tmp = document.createElement('canvas');
-    tmp.width = 500; tmp.height = 125;
-    tmp.getContext('2d').drawImage(src, 0, 0, 500, 125);
-    return tmp.toDataURL('image/png', 0.85);
+  function downloadSig(name) {
+    const canvas = document.getElementById('sig-canvas');
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'unterschrift-' + (name || 'praktikant').replace(/\s+/g, '-') + '.png';
+    a.click();
   }
 
-  async function sendZieleSchweige() {
-    const btn = document.getElementById('btn-ziele');
+  function openMailto(subject, body) {
+    window.location.href = 'mailto:' + TO_EMAIL
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(body);
+  }
+
+  function sendZieleSchweige() {
     const bestaetigt = document.getElementById('s-bestaetigung').checked;
 
     if (!bestaetigt) {
@@ -692,15 +691,13 @@
 
     const name = val('z-name') + ' ' + val('z-vorname');
 
-    setLoading(btn, true);
-
     const ziele = [1,2,3,4,5]
       .map(i => val('z-ziel' + i))
       .filter(Boolean)
-      .map((z, i) => (i+1) + '. ' + z)
+      .map((z, i) => '  ' + (i+1) + '. ' + z)
       .join('\n');
 
-    const msg =
+    const body =
       '════════════════════════════\n' +
       '1. PRAKTIKUMSZIELE\n' +
       '════════════════════════════\n\n' +
@@ -711,80 +708,39 @@
       'Beruf / Ausbildung:    ' + val('z-beruf') + '\n' +
       'Ausbildungsstand:      ' + val('z-ausbildungsstand') + '\n\n' +
       'Ziele:\n' + ziele + '\n\n' +
-      'Bemerkung:\n' + (val('z-bemerkung') || '–') + '\n' +
+      'Bemerkung:\n' + (val('z-bemerkung') || '–') + '\n\n' +
       'Ort / Datum:           ' + val('z-ort') + ', ' + val('z-datum') + '\n\n' +
       '════════════════════════════\n' +
       '2. SCHWEIGEPFLICHT\n' +
       '════════════════════════════\n\n' +
-      'Bestätigung:           ' + (bestaetigt ? 'Ja, bestätigt' : 'Nicht bestätigt') + '\n' +
-      'Unterschrift:          [siehe Anhang]\n' +
+      'Bestätigung:           Ja, bestätigt\n' +
+      'Unterschrift:          [PNG-Anhang bitte hinzufügen]\n' +
       'Ort / Datum:           ' + val('s-ort') + ', ' + val('s-datum');
 
-    const sigBlob = await new Promise(res => document.getElementById('sig-canvas').toBlob(res, 'image/png'));
-    const sigFile = new File([sigBlob], 'unterschrift-' + (val('z-name') || 'praktikant') + '.png', { type: 'image/png' });
-
-    try {
-      const fd = new FormData();
-      fd.append('access_key', WEB3FORMS_KEY);
-      fd.append('subject', 'Praktikumsunterlagen – ' + name);
-      fd.append('from_name', name);
-      fd.append('message', msg);
-      fd.append('attachment', sigFile);
-      const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.success) {
-        showToast('<b>✅ Erfolgreich gesendet</b><br>Die Unterlagen wurden an ' + TO_EMAIL + ' verschickt.', true);
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('<b>❌ Senden fehlgeschlagen</b><br>' + (e.message || 'Unbekannter Fehler'), false);
-    } finally {
-      setLoading(btn, false);
-    }
+    downloadSig(name);
+    setTimeout(() => openMailto('Praktikumsunterlagen – ' + name, body), 300);
+    showToast('📎 Unterschrift gespeichert – bitte als Anhang zur E-Mail hinzufügen.', true);
   }
 
-  async function sendAuswertung() {
-    const btn = document.getElementById('btn-auswertung');
+  function sendAuswertung() {
     const erfuellt = document.querySelector('input[name="erfuellt"]:checked');
     const interesse = document.querySelector('input[name="interesse"]:checked');
     const name = val('a-name');
 
-    setLoading(btn, true);
-
-    const msg =
+    const body =
       '════════════════════════════\n' +
       'PRAKTIKUMSAUSWERTUNG\n' +
       '════════════════════════════\n\n' +
-      'Name Praktikant:            ' + val('a-name') + '\n' +
-      'Verantw. Rettungssanitäter: ' + val('a-sanit') + '\n' +
-      'Datum Praktikum:            ' + val('a-datum') + '\n' +
-      'Erwartungen / Ziele erfüllt:' + (erfuellt ? erfuellt.value : '–') + '\n' +
-      'Interesse Ausbildung RS HF: ' + (interesse ? interesse.value : '–') + '\n\n' +
+      'Name Praktikant:             ' + val('a-name') + '\n' +
+      'Verantw. Rettungssanitäter:  ' + val('a-sanit') + '\n' +
+      'Datum Praktikum:             ' + val('a-datum') + '\n' +
+      'Erwartungen / Ziele erfüllt: ' + (erfuellt ? erfuellt.value : '–') + '\n' +
+      'Interesse Ausbildung RS HF:  ' + (interesse ? interesse.value : '–') + '\n\n' +
       'Schriftliche Ergänzung:\n' + (val('a-ergaenzung') || '–') + '\n\n' +
       'Rückmeldung:\n' + (val('a-feedback') || '–') + '\n\n' +
-      'Ort / Datum:                ' + val('a-ort') + ', ' + val('a-abschlussdatum');
+      'Ort / Datum:                 ' + val('a-ort') + ', ' + val('a-abschlussdatum');
 
-    try {
-      const fd = new FormData();
-      fd.append('access_key', WEB3FORMS_KEY);
-      fd.append('subject', 'Praktikumsauswertung – ' + name);
-      fd.append('from_name', name);
-      fd.append('message', msg);
-      const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', body: fd });
-      const data = await res.json();
-      if (data.success) {
-        showToast('<b>✅ Erfolgreich gesendet</b><br>Die Auswertung wurde an ' + TO_EMAIL + ' verschickt.', true);
-      } else {
-        throw new Error(data.message);
-      }
-    } catch (e) {
-      console.error(e);
-      showToast('<b>❌ Senden fehlgeschlagen</b><br>' + (e.message || 'Unbekannter Fehler'), false);
-    } finally {
-      setLoading(btn, false);
-    }
+    openMailto('Praktikumsauswertung – ' + name, body);
   }
 
   // Unterschrift Canvas
