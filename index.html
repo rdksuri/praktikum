@@ -101,6 +101,17 @@
     }
     .hero h2 strong { font-weight: 700; }
     .hero p { font-size: 1rem; opacity: .85; max-width: 540px; font-weight: 300; }
+    .btn-copy {
+      margin-top: 1.2rem;
+      display: inline-flex; align-items: center; gap: .55rem;
+      font: inherit; font-size: .95rem; font-weight: 600;
+      color: var(--pink); background: var(--white);
+      border: 2px solid var(--white); border-radius: 999px;
+      padding: .6rem 1.2rem; cursor: pointer;
+    }
+    .btn-copy:hover { background: var(--pink-soft); }
+    .btn-copy:focus-visible { outline: 3px solid var(--white); outline-offset: 3px; }
+    .btn-copy svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
     /* MAIN */
     main {
@@ -392,6 +403,10 @@
     <div class="hero-label">Praktikum Rettungsdienst</div>
     <h2><strong>Willkommen</strong> beim Rettungsdienst<br>Kantonsspital Uri</h2>
     <p>Hier findest du alle wichtigen Informationen für deinen Start – Anfahrt, Parken, Ansprechpersonen und Formulare.</p>
+    <button type="button" class="btn-copy" id="copy-btn" onclick="copyLink()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg>
+      <span id="copy-label">Link kopieren</span>
+    </button>
   </div>
 </div>
 
@@ -634,6 +649,35 @@
 </footer>
 
 <script>
+  const SEITEN_LINK = 'https://rdksuri.github.io/praktikum/';
+
+  function copyLink() {
+    const label = document.getElementById('copy-label');
+    const done = ok => {
+      label.textContent = ok ? 'Link kopiert' : 'Kopieren nicht möglich';
+      setTimeout(() => { label.textContent = 'Link kopieren'; }, 2500);
+    };
+    const fallback = () => {
+      const ta = document.createElement('textarea');
+      ta.value = SEITEN_LINK;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (!ok) window.prompt('Link kopieren:', SEITEN_LINK);
+      done(ok);
+    };
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(SEITEN_LINK).then(() => done(true), fallback);
+    } else {
+      fallback();
+    }
+  }
+
   function toggleLageplan() {
     const box = document.getElementById('lageplan-box');
     const arrow = document.getElementById('lageplan-arrow');
